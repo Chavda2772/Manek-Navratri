@@ -48,3 +48,9 @@ export async function updateAppConfig(data: z.infer<typeof appConfigSchema>) {
   revalidatePath("/admin");
   return { success: true };
 }
+
+import { testSmtpConfig as runTestSmtpConfig } from "@/lib/nodemailer";
+
+export async function testSmtpConfig(data: Parameters<typeof runTestSmtpConfig>[0]) {
+  return runTestSmtpConfig(data);
+}
