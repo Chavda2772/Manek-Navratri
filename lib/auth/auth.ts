@@ -247,7 +247,7 @@ export const auth = betterAuth({
             dateFormat: settings?.dateFormat ?? "dd/MM/yyyy",
             timeFormat: settings?.timeFormat ?? "hh:mm a",
             language: settings?.language ?? "en",
-            theme: settings?.theme ?? ThemeMode.AUTO,
+            theme: settings?.theme ?? ThemeMode.LIGHT,
           },
         },
 
@@ -272,10 +272,10 @@ export const auth = betterAuth({
     }),
     username(),
     nextCookies(),
-    ...((envServer.CPATCHA_SECRET_KEY || process.env.CPATCHA_SECRET_KEY || process.env.CAPTCHA_SECRET_KEY) ? [
+    ...((envServer.CPATCHA_SECRET_KEY) ? [
       captcha({
         provider: "google-recaptcha",
-        secretKey: (envServer.CPATCHA_SECRET_KEY || process.env.CPATCHA_SECRET_KEY || process.env.CAPTCHA_SECRET_KEY)!,
+        secretKey: envServer.CPATCHA_SECRET_KEY!,
         endpoints: [
           "/sign-in/email",
           "/sign-in/username",
