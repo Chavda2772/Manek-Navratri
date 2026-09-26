@@ -244,7 +244,7 @@ export const auth = betterAuth({
           userSettings: {
             currency: settings?.currency ?? Currency.INR,
             locale: settings?.locale ?? "en-IN",
-            dateFormat: settings?.dateFormat ?? "dd/MM/yyyy",
+            dateFormat: settings?.dateFormat ?? "dd MMM, yyyy",
             timeFormat: settings?.timeFormat ?? "hh:mm a",
             language: settings?.language ?? "en",
             theme: settings?.theme ?? ThemeMode.LIGHT,

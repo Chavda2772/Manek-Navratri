@@ -169,7 +169,7 @@ model UserSettings {
   userId     String    @id
   currency   Currency  @default(INR)
   locale     String    @default("en-IN")
-  dateFormat String    @default("dd/MM/yyyy")
+  dateFormat String    @default("dd MMM, yyyy")
   timeFormat String    @default("hh:mm a")
   language   String    @default("en")
   theme      ThemeMode @default(AUTO)

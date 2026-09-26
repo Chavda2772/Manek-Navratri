@@ -13,7 +13,7 @@ export function getDefaultConfig() {
   return {
     currency: Currency.INR,
     locale: "en-IN",
-    dateFormat: "dd/MM/yyyy",
+    dateFormat: "dd MMM, yyyy",
     timeFormat: "hh:mm a",
     language: "en",
     theme: ThemeMode.LIGHT,
