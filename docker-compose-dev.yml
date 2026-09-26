@@ -1,6 +1,32 @@
 services:
+  postgres_db:
+    image: postgres:17.4
+    hostname: postgres_db
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: next_template
+      POSTGRES_USER: next_user
+      POSTGRES_PASSWORD: next_pass
+    networks:
+      - prisma-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U next_user -d next_template" ]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   app:
-    image: chavda2772/next-template:latest
+    build:
+      context: .
+      args:
+        - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+        - NEXT_PUBLIC_APP_DESCRIPTION=${NEXT_PUBLIC_APP_DESCRIPTION}
+        - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+        - DATABASE_URL=${DATABASE_URL}
     container_name: app
     environment:
       # Application
@@ -30,6 +56,9 @@ services:
     networks:
       - prisma-network
     restart: unless-stopped
+    depends_on:
+      postgres_db:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1" ]
       interval: 10s
@@ -52,6 +81,8 @@ services:
     networks:
       - prisma-network
     depends_on:
+      postgres_db:
+        condition: service_healthy
       app:
         condition: service_healthy
 

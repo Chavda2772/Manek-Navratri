@@ -15,7 +15,7 @@ VERSION=$1
 
 # Update docker username and Project Image
 ENV_FILE=${2:-.env.production}
-IMAGE="username/next-template"
+IMAGE="chavda2772/next-template"
 
 # Check if env file exists
 if [ ! -f "$ENV_FILE" ]; then

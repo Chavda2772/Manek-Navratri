@@ -19,43 +19,64 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   app:
-    build:
-      context: .
-      args:
-        - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
-        - NEXT_PUBLIC_APP_DESCRIPTION=${NEXT_PUBLIC_APP_DESCRIPTION}
-        - BETTER_AUTH_URL=${BETTER_AUTH_URL}
-        - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-        - DATABASE_URL=${DATABASE_URL}
+    image: chavda2772/next-template:latest
     container_name: app
-    env_file:
-      - .env.production
+    environment:
+      # Application
+      NODE_ENV: "production"
+      NEXT_PUBLIC_APP_NAME: "AppName"
+      NEXT_PUBLIC_APP_DESCRIPTION: "This is the application description."
+      ADVANCE_PASS_CHECK: "true"
+
+      # Better Auth
+      BETTER_AUTH_SECRET: "lMD1eol2MrTxIZixGYyjwT0G0DQJ6oLJ"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      BETTER_AUTH_TRUSTED_ORIGINS: "https://example.com,https://*.example.com"
+
+      # DATABASE
+      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
+
+      # Email Service
+      SMTP_HOST: "mail.example.com"
+      SMTP_PORT: 587
+      SMTP_USER: "user@example.com"
+      SMTP_PASS: "**PASSWORD**"
+      SMTP_SECURE: false
+      FROM_EMAIL: "user <user@example.com>"
+
     ports:
       - "3000:3000"
     networks:
       - prisma-network
     restart: unless-stopped
-    environment:
-      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
     depends_on:
       postgres_db:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   prisma-studio:
-    image: node:24-alpine
-    container_name: prisma-studio
-    working_dir: /app
-    volumes:
-      - .:/app
-    command: npx prisma studio --port 5555 --browser none
+    image: chavda2772/prisma-studio:latest
+    container_name: property_prisma_studio
+    restart: always
     ports:
       - "5555:5555"
     environment:
       DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
+      STUDIO_PORT: 5555
+      STUDIO_HOST: "0.0.0.0"
+      STUDIO_BROWSER: "none"
+      AUTO_INTROSPECT: ${AUTO_INTROSPECT:-true}
     networks:
       - prisma-network
     depends_on:
       postgres_db:
+        condition: service_healthy
+      app:
         condition: service_healthy
 
 networks:
