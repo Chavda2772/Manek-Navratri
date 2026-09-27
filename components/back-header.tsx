@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
+import ProfileAvatar from "./auth/profile-avatar"
 
 interface HeaderMenuItem {
   label: string
@@ -96,8 +97,8 @@ const BackHeader = ({
       </div>
 
       {/* Menu / Actions */}
-      <div className="flex items-center">
-        {menuItems.length > 0 ? (
+      {menuItems.length > 0 ? (
+        <div className="flex items-center">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -134,10 +135,10 @@ const BackHeader = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : (
-          <div className="w-11" /> // Spacing matching the back button
-        )}
-      </div>
+        </div>
+      ) : (
+        <ProfileAvatar />
+      )}
     </motion.header>
   )
 }
