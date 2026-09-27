@@ -198,7 +198,7 @@ export const auth = betterAuth({
       ac,
       roles,
       defaultRole: "user",
-      adminRoles: ["admin", "moderator"],
+      adminRoles: ["admin"],
     }),
     twoFactor(),
     lastLoginMethod(),

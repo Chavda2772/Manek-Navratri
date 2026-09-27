@@ -21,12 +21,13 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger
 } from "../ui/dropdown-menu";
+import { UserRole } from "@/lib/generated/prisma/enums";
 
 export default function ProfileAvatar() {
     const { data: session } = authClient.useSession();
     const { data: deviceSessions } = useDeviceSessions();
-    const isAdmin = hasRole(session?.user?.role, "admin");
-    const canAccessAdmin = hasAnyRole(session?.user?.role, ["admin", "moderator"]);
+    const isAdmin = hasRole(session?.user?.role, UserRole.admin);
+    const canAccessAdmin = hasRole(session?.user?.role, UserRole.admin);
     const { mutate: setActive } = useSetActiveSession();
     const router = useRouter();
 

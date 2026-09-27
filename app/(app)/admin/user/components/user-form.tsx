@@ -27,6 +27,7 @@ import {
     MapPin,
     Phone,
     ShieldCheck,
+    Sparkles,
     User
 } from "lucide-react";
 import type { Route } from "next";
@@ -87,6 +88,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
         }
     });
 
+    const name = watch("name");
     const selectedRoles = watch("role");
     const currentRolesList = parseRoles(selectedRoles);
 
@@ -166,6 +168,14 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                             <div className="relative group">
                                 <Input {...register("username")} placeholder="john_doe_123" className="pl-12 rounded-2xl h-14 bg-muted/30 border-none transition-all focus-visible:ring-primary/20" />
                                 <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-primary" size={20} />
+                                <button
+                                    type="button"
+                                    onClick={() => setValue("username", getUniqueUserName(name), { shouldValidate: true, shouldDirty: true })}
+                                    title="Generate unique username"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors focus:outline-hidden cursor-pointer"
+                                >
+                                    <Sparkles size={18} />
+                                </button>
                             </div>
                             {errors.username && <p className="text-xs text-destructive ml-1">{errors.username.message}</p>}
                         </div>

@@ -18,7 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import ProfileAvatar from "./auth/profile-avatar"
+import ProfileAvatar from "./user/profile-avatar"
 
 interface HeaderMenuItem {
   label: string
