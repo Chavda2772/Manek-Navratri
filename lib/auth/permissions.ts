@@ -23,8 +23,7 @@ export const moderatorRole = ac.newRole({
 });
 
 export const adminRole = ac.newRole({
-  user: defaultStatements.user,
-  session: defaultStatements.session,
+  ...defaultStatements,
   config: ["read", "update"],
   storage: ["read", "write", "delete", "move"],
 });
