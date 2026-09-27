@@ -1,6 +1,7 @@
 "use server";
 
 import { getUserSession } from "@/lib/auth/auth";
+import { requirePermission } from "@/lib/auth/guard";
 import { hasRole } from "@/lib/auth/permissions";
 import {
     deleteDirectory,
@@ -11,22 +12,17 @@ import {
 } from "@/lib/file-operations";
 
 export async function getStorageItems(relativePath: string = "") {
-    const session = await getUserSession();
-    if (!hasRole(session?.user?.role, "admin")) throw new Error("Unauthorized");
-
+    await requirePermission("storage", "read");
     return await listDirectoryContents(relativePath);
 }
 
 export async function renameStorageItem(oldPath: string, newName: string) {
-    const session = await getUserSession();
-    if (!hasRole(session?.user?.role, "admin")) throw new Error("Unauthorized");
-
+    await requirePermission("storage", "write");
     return await renameItem(oldPath, newName);
 }
 
 export async function deleteStorageItem(relativePath: string, isDir: boolean) {
-    const session = await getUserSession();
-    if (!hasRole(session?.user?.role, "admin")) throw new Error("Unauthorized");
+    await requirePermission("storage", "delete");
 
     if (isDir) {
         return await deleteDirectory(relativePath);
@@ -36,8 +32,6 @@ export async function deleteStorageItem(relativePath: string, isDir: boolean) {
 }
 
 export async function moveStorageItem(oldPath: string, newDirPath: string) {
-    const session = await getUserSession();
-    if (!hasRole(session?.user?.role, "admin")) throw new Error("Unauthorized");
-
+    await requirePermission("storage", "move");
     return await moveFile(oldPath, newDirPath);
 }

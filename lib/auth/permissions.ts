@@ -1,75 +1,58 @@
 import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/admin/access";
 
-/**
- * Access Control Statements defining available resources and actions
- */
-export const statement = {
+// 1. Define resources and allowable actions
+export const resourceStatement = {
   ...defaultStatements,
+  storage: ["read", "write", "delete", "move"],
+  config: ["read", "update"]
 } as const;
 
-/**
- * Access Control Instance
- */
-export const ac = createAccessControl(statement);
+export const ac = createAccessControl(resourceStatement);
 
-/**
- * 1. Admin Role: Full access to all user and session management operations
- */
-export const admin = ac.newRole({
-  user: [
-    "create",
-    "list",
-    "set-role",
-    "ban",
-    "impersonate",
-    "impersonate-admins",
-    "delete",
-    "set-password",
-    "set-email",
-    "get",
-    "update",
-  ],
-  session: ["list", "revoke", "delete"],
-});
-
-/**
- * 2. Moderator Role: Permissions to inspect, update, ban/unban users, and manage active sessions.
- * Restricted from deleting users, altering roles, or changing passwords/emails.
- */
-export const moderator = ac.newRole({
-  user: ["get", "list", "ban", "update"],
-  session: ["list", "revoke"],
-});
-
-/**
- * 3. User Role: Default application user with standard self-service permissions
- */
-export const user = ac.newRole({
+// 2. Define roles as permission bundles
+export const userRole = ac.newRole({
   user: [],
   session: [],
 });
 
-/**
- * Better Auth Roles Registry for Admin Plugin
- */
+export const moderatorRole = ac.newRole({
+  user: ["get", "list"],
+  session: ["list", "revoke"],
+  storage: ["read"],
+});
+
+export const adminRole = ac.newRole({
+  user: defaultStatements.user,
+  session: defaultStatements.session,
+  config: ["read", "update"],
+  storage: ["read", "write", "delete", "move"],
+});
+
 export const roles = {
-  admin,
-  user,
-  moderator,
-} as const;
+  user: userRole,
+  moderator: moderatorRole,
+  admin: adminRole,
+};
+
+export type RoleName = keyof typeof roles;
+
+// Backwards compatibility aliases
+export const user = userRole;
+export const moderator = moderatorRole;
+export const admin = adminRole;
 
 /**
  * Role Constants and Types
  */
 export const ROLES = {
   ADMIN: "admin",
-  USER: "user",
   MODERATOR: "moderator",
+  USER: "user"
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
-export const ALL_ROLES: Role[] = [ROLES.ADMIN, ROLES.USER, ROLES.MODERATOR];
+export const ALL_ROLES: Role[] = [ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER];
 
 /**
  * Parse comma-separated role string into an array of roles.
@@ -92,7 +75,7 @@ export function parseRoles(roleString?: string | null): Role[] {
 /**
  * Formats an array of roles or role string into a normalized comma-separated string.
  */
-export function stringifyRoles(rolesInput: string[] | string): string {
+export function stringifyRoles(rolesInput: (Role | string)[] | string): string {
   if (Array.isArray(rolesInput)) {
     const validRoles = rolesInput
       .sort()
@@ -108,40 +91,41 @@ export function stringifyRoles(rolesInput: string[] | string): string {
 /**
  * Check if a user's role string contains a specific role.
  */
-export function hasRole(roleString: string | null | undefined, targetRole: Role): boolean {
+export function hasRole(roleString: string | null | undefined, targetRole: Role | string): boolean {
   const currentRoles = parseRoles(roleString);
-  return currentRoles.includes(targetRole);
+  return (currentRoles as string[]).includes(targetRole.toLowerCase());
 }
 
 /**
  * Check if a user's role string contains ANY of the given target roles.
  */
-export function hasAnyRole(roleString: string | null | undefined, targetRoles: Role[]): boolean {
+export function hasAnyRole(roleString: string | null | undefined, targetRoles: (Role | string)[]): boolean {
   const currentRoles = parseRoles(roleString);
-  return targetRoles.some((target) => currentRoles.includes(target));
+  const normalizedTargets = targetRoles.map((t) => t.toLowerCase());
+  return (currentRoles as string[]).some((r) => normalizedTargets.includes(r));
 }
 
 /**
  * Check if a user's role string contains ALL of the given target roles.
  */
-export function hasAllRoles(roleString: string | null | undefined, targetRoles: Role[]): boolean {
+export function hasAllRoles(roleString: string | null | undefined, targetRoles: (Role | string)[]): boolean {
   const currentRoles = parseRoles(roleString);
-  return targetRoles.every((target) => currentRoles.includes(target));
+  const normalizedTargets = targetRoles.map((t) => t.toLowerCase());
+  return normalizedTargets.every((t) => (currentRoles as string[]).includes(t));
 }
 
 /**
  * Check whether a user's multi-roles satisfy a specific permission set.
  */
+export type PermissionCheck = Parameters<(typeof adminRole)["authorize"]>[0];
+
 export function checkUserPermission(
   roleString: string | null | undefined,
-  permissions: {
-    user?: (typeof defaultStatements.user)[number][];
-    session?: (typeof defaultStatements.session)[number][];
-  }
+  permissions: PermissionCheck
 ): boolean {
   const currentRoles = parseRoles(roleString);
   for (const r of currentRoles) {
-    const roleDef = roles[r];
+    const roleDef = (roles as Record<string, any>)[r];
     if (roleDef && roleDef.authorize(permissions).success) {
       return true;
     }

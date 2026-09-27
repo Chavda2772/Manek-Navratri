@@ -11,12 +11,13 @@ import { AppHeader } from "@/components/app-header";
 import { getUserSession } from "@/lib/auth/auth";
 import { hasAnyRole } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
+import { UserRole } from "@/lib/generated/prisma/enums";
 
 export default async function AdminPage() {
     const session = await getUserSession();
 
     // Guard: Only admins and moderators can access this page
-    if (!hasAnyRole(session?.user?.role, ["admin", "moderator"])) {
+    if (!hasAnyRole(session?.user?.role, [UserRole.admin])) {
         return <Restricted />;
     }
 
