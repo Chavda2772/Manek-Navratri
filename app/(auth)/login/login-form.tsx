@@ -43,6 +43,7 @@ function LoginFormContent({ providers }: LoginFormProps) {
   const errorCode = searchParams.get("error");
   const turnstileRef = useRef<TurnstileInstance>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [isAddAccount, setIsAddAccount] = useState<boolean>(false);
 
   const hasSocialLogin = providers.google || providers.discord || providers.facebook;
 
@@ -55,12 +56,14 @@ function LoginFormContent({ providers }: LoginFormProps) {
 
   // Redirect to dashboard (skip if adding an account)
   useEffect(() => {
-    const isAddAccount = searchParams.get("add_account") === "1";
-    if (isAddAccount) {
+    const isAddAcc = searchParams.get("add_account") === "1";
+    if (isAddAcc) {
       setLastLogin(authClient.getLastUsedLoginMethod() || "");
+      setIsAddAccount(true);
       return;
     }
 
+    // Redirect to banned
     authClient.getSession()
       .then((session) => {
         if (session.data) {
@@ -305,14 +308,16 @@ function LoginFormContent({ providers }: LoginFormProps) {
         </div>
 
         {/* SIGN UP */}
-        <motion.div variants={itemVariants} className="mt-8 pt-8 border-t border-border/50">
-          <p className="text-center text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link tabIndex={8} href="/signup" className="font-bold text-primary hover:text-primary/80 transition-colors">
-              Get Started
-            </Link>
-          </p>
-        </motion.div>
+        {!isAddAccount && (
+          <motion.div variants={itemVariants} className="mt-8 pt-8 border-t border-border/50">
+            <p className="text-center text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link tabIndex={8} href="/signup" className="font-bold text-primary hover:text-primary/80 transition-colors">
+                Get Started
+              </Link>
+            </p>
+          </motion.div>
+        )}
       </motion.div >
 
       {/* RIGHT SIDE: ILLUSTRATION & FEATURES */}
