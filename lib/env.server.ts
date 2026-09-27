@@ -32,7 +32,7 @@ const envSchema = zod.object({
   TURNSTILE_SECRET_KEY: zod.string().optional(),
 })
 
-/**`
+/**
  * Note: Use getAppConfig() from @/lib/app-config to get the final merged
  * configuration (Database + Env Fallback). This envServer only validates
  * the base environment variables.
