@@ -1,12 +1,9 @@
-import { ALL_ROLES, parseRoles, Role, ROLES } from "@/lib/auth/permissions";
+import { parseRoles, Role, ROLES } from "@/lib/auth/permissions";
 import {
     LucideIcon,
     Shield,
-    ShieldAlert,
     User,
-    UserCheck,
-    UserCircle,
-    UserPlus
+    UserCheck
 } from "lucide-react";
 
 /**
@@ -73,49 +70,6 @@ export const USER_ROLE_CONFIGS: Record<string, UserRoleConfig> = {
             text: "text-blue-600 dark:text-blue-400",
             border: "border-blue-500/20",
             bg: "bg-blue-500/10",
-        },
-    },
-    // Optional application-specific roles
-    agent: {
-        id: "agent",
-        label: "Agent",
-        description: "Support or agent representative access",
-        icon: UserPlus,
-        accent: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-        colors: {
-            badge: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
-            accent: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-            text: "text-emerald-600 dark:text-emerald-400",
-            border: "border-emerald-500/20",
-            bg: "bg-emerald-500/10",
-        },
-    },
-    client: {
-        id: "client",
-        label: "Client",
-        description: "Client or customer account access",
-        icon: UserCircle,
-        accent: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-        colors: {
-            badge: "bg-purple-500/10 text-purple-600 border border-purple-500/20",
-            accent: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-            text: "text-purple-600 dark:text-purple-400",
-            border: "border-purple-500/20",
-            bg: "bg-purple-500/10",
-        },
-    },
-    owner: {
-        id: "owner",
-        label: "Owner",
-        description: "Organization or property owner access",
-        icon: ShieldAlert,
-        accent: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-        colors: {
-            badge: "bg-orange-500/10 text-orange-600 border border-orange-500/20",
-            accent: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-            text: "text-orange-600 dark:text-orange-400",
-            border: "border-orange-500/20",
-            bg: "bg-orange-500/10",
         },
     },
 };
