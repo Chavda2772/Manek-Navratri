@@ -3,10 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { authClient } from "@/lib/auth/auth-client";
-import { parseRoles, Role, ROLES } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
 import { cn } from "@/lib/utils";
-import { Check, Shield, User, UserCheck } from "lucide-react";
+import { parseRoles, Role, ROLES, USER_ROLE_OPTIONS } from "@/utility/users-fn";
+import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,34 +15,6 @@ interface UserRoleModalProps {
     onClose: () => void;
     onSuccess: () => void;
 }
-
-interface RoleOption {
-    id: Role;
-    label: string;
-    icon: typeof Shield;
-    accent: string;
-}
-
-const ROLE_OPTIONS: RoleOption[] = [
-    {
-        id: ROLES.ADMIN,
-        label: "Admin",
-        icon: Shield,
-        accent: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
-    },
-    {
-        id: ROLES.MODERATOR,
-        label: "Moderator",
-        icon: UserCheck,
-        accent: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    },
-    {
-        id: ROLES.USER,
-        label: "User",
-        icon: User,
-        accent: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    },
-];
 
 export function UserRoleModal({ user, onClose, onSuccess }: UserRoleModalProps) {
     const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
@@ -117,8 +89,8 @@ export function UserRoleModal({ user, onClose, onSuccess }: UserRoleModalProps) 
                 </DialogHeader>
 
                 <div className="flex flex-col gap-3 py-6">
-                    {ROLE_OPTIONS.map((role) => {
-                        const isSelected = selectedRoles.includes(role.id);
+                    {USER_ROLE_OPTIONS.map((role) => {
+                        const isSelected = selectedRoles.includes(role.id as Role);
                         const Icon = role.icon;
 
                         return (
@@ -126,11 +98,11 @@ export function UserRoleModal({ user, onClose, onSuccess }: UserRoleModalProps) 
                                 key={role.id}
                                 role="button"
                                 tabIndex={0}
-                                onClick={() => toggleRole(role.id)}
+                                onClick={() => toggleRole(role.id as Role)}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter" || e.key === " ") {
                                         e.preventDefault();
-                                        toggleRole(role.id);
+                                        toggleRole(role.id as Role);
                                     }
                                 }}
                                 className={cn(

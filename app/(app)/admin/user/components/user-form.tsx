@@ -13,9 +13,10 @@ import { DocumentList } from "@/components/user/document-list";
 import { DocumentUpload } from "@/components/user/document-upload";
 import { userStatusList } from "@/lib/constants/common";
 import { UserStatus } from "@/lib/generated/prisma/enums";
-import { ALL_ROLES, parseRoles, Role } from "@/lib/auth/permissions";
+import { cn } from "@/lib/utils";
 import { useCreateUser, useUpdateUser } from "@/tanstacks/user";
 import { getUniqueUserName } from "@/utility/common-function";
+import { ALL_ROLES, parseRoles, Role, USER_ROLE_OPTIONS } from "@/utility/users-fn";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import {
@@ -232,23 +233,34 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                         <div className="space-y-4">
                             <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Assigned Categories (Roles)</Label>
                             <div className="flex flex-wrap gap-4 p-6 bg-muted/20 rounded-[2rem] border border-border/50">
-                                {ALL_ROLES.map((role) => (
-                                    <div
-                                        key={role}
-                                        className="flex items-center gap-3 bg-card px-5 py-3 rounded-2xl border border-border/50 shadow-xs cursor-pointer hover:border-primary/50 transition-all duration-300"
-                                        onClick={() => toggleRole(role)}
-                                    >
-                                        <Checkbox
-                                            id={role}
-                                            checked={currentRolesList.includes(role)}
-                                            onCheckedChange={() => toggleRole(role)}
-                                            className="h-5 w-5 rounded-md"
-                                        />
-                                        <Label htmlFor={role} className="capitalize cursor-pointer text-sm font-black text-foreground/80 tracking-tight">
-                                            {role}
-                                        </Label>
-                                    </div>
-                                ))}
+                                {USER_ROLE_OPTIONS.map((roleConfig) => {
+                                    const role = roleConfig.id as Role;
+                                    const Icon = roleConfig.icon;
+                                    const isChecked = currentRolesList.includes(role);
+                                    return (
+                                        <div
+                                            key={role}
+                                            className={cn(
+                                                "flex items-center gap-3 bg-card px-5 py-3 rounded-2xl border shadow-xs cursor-pointer transition-all duration-300",
+                                                isChecked ? "border-primary/50 bg-primary/5" : "border-border/50 hover:border-border"
+                                            )}
+                                            onClick={() => toggleRole(role)}
+                                        >
+                                            <Checkbox
+                                                id={role}
+                                                checked={isChecked}
+                                                onCheckedChange={() => toggleRole(role)}
+                                                className="h-5 w-5 rounded-md"
+                                            />
+                                            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-xs", roleConfig.accent)}>
+                                                <Icon size={14} />
+                                            </div>
+                                            <Label htmlFor={role} className="cursor-pointer text-sm font-black text-foreground/80 tracking-tight">
+                                                {roleConfig.label}
+                                            </Label>
+                                        </div>
+                                    );
+                                })}
                             </div>
                             {errors.role && <p className="text-xs text-destructive ml-1">{errors.role.message}</p>}
                         </div>

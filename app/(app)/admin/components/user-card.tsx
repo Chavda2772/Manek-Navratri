@@ -13,7 +13,7 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth/auth-client";
-import { hasRole, parseRoles, Role } from "@/lib/auth/permissions";
+import { getRoleConfig, parseRoles, Role } from "@/utility/users-fn";
 import {
     Activity,
     Ban,
@@ -32,7 +32,7 @@ import { toast } from "sonner";
 
 import { UserStatus } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
-import { getFileUrl } from "@/lib/utils";
+import { cn, getFileUrl } from "@/lib/utils";
 import { useComprehensiveDeleteUser } from "@/tanstacks/admin";
 import { getInitials } from "@/utility/common-function";
 import { useRouter } from "next/navigation";
@@ -149,16 +149,17 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
     const getRoleBadges = (roleString?: string | null) => {
         const userRoles = parseRoles(roleString);
         return userRoles.map((r) => {
-            switch (r) {
-                case "admin":
-                    return <Badge key={r} variant="secondary" className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 text-[9px] font-black tracking-widest h-5 px-2">Admin</Badge>;
-                case "moderator":
-                    return <Badge key={r} variant="secondary" className="bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-black tracking-widest h-5 px-2">Moderator</Badge>;
-                case "user":
-                    return userRoles.length === 1 ? null : <Badge key={r} variant="secondary" className="bg-muted text-muted-foreground border border-border/40 text-[9px] font-black tracking-widest h-5 px-2">User</Badge>;
-                default:
-                    return <Badge key={r} variant="secondary" className="bg-muted text-muted-foreground border-none text-[9px] font-black tracking-widest h-5 px-2">{r}</Badge>;
-            }
+            if (r === "user" && userRoles.length === 1) return null;
+            const config = getRoleConfig(r);
+            return (
+                <Badge
+                    key={r}
+                    variant="secondary"
+                    className={cn(config.colors.badge, "text-[9px] font-black tracking-widest h-5 px-2")}
+                >
+                    {config.label}
+                </Badge>
+            );
         });
     };
 

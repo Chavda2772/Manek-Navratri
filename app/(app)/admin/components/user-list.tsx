@@ -18,10 +18,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { hasRole, ROLES } from "@/lib/auth/permissions";
+import { hasRole } from "@/lib/auth/permissions";
 import { UserStatus } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
+import { cn } from "@/lib/utils";
 import { useAdminUsers } from "@/tanstacks/admin";
+import { getRoleLabel, USER_ROLE_OPTIONS } from "@/utility/users-fn";
 import { UserCard } from "./user-card";
 
 interface User {
@@ -95,15 +97,23 @@ export function UserList() {
                             render={
                                 <Button variant="outline" className="flex-1 sm:flex-none h-11 rounded-2xl gap-2 px-5 border-2 border-primary/10 bg-background hover:bg-primary/5 hover:border-primary/20 shadow-sm text-[11px] font-black uppercase tracking-widest text-primary/80 transition-all">
                                     <Shield className="h-4 w-4" />
-                                    {filterRole === "all" ? tran("admin.user_mng.all_roles") : filterRole}
+                                    {filterRole === "all" ? tran("admin.user_mng.all_roles") : getRoleLabel(filterRole)}
                                 </Button>
                             }
                         />
                         <DropdownMenuContent className="rounded-2xl w-48 p-2 border-2 border-primary/5">
-                            <DropdownMenuItem onClick={() => setFilterRole("all")} className="rounded-xl font-bold">{tran("admin.user_mng.all_roles")}</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilterRole(ROLES.ADMIN)} className="rounded-xl font-bold text-indigo-600">{tran("admin.user_mng.admins_only")}</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilterRole(ROLES.MODERATOR)} className="rounded-xl font-bold text-amber-600">Moderators</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilterRole(ROLES.USER)} className="rounded-xl font-bold">{tran("admin.user_mng.users_only")}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterRole("all")} className="rounded-xl font-bold">
+                                {tran("admin.user_mng.all_roles")}
+                            </DropdownMenuItem>
+                            {USER_ROLE_OPTIONS.map((role) => (
+                                <DropdownMenuItem
+                                    key={role.id}
+                                    onClick={() => setFilterRole(role.id as string)}
+                                    className={cn("rounded-xl font-bold", role.colors.text)}
+                                >
+                                    {role.label}
+                                </DropdownMenuItem>
+                            ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
