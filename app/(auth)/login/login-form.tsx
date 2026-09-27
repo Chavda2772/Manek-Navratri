@@ -6,8 +6,7 @@ import { Eye, EyeOff, Mail, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 // Lib
 import { authClient, signIn } from "@/lib/auth/auth-client";
@@ -15,7 +14,7 @@ import { envClient } from "@/lib/env.client";
 import { tran } from "@/lib/languages/i18n";
 
 // Components
-import { RecaptchaNotice } from "@/components/auth/recaptcha-notice";
+import { TurnstileWidget, type TurnstileInstance } from "@/components/auth/turnstile";
 import { Input } from "@/components/ui/input";
 import { containerVariants, floatAnimate, floatTransition, itemVariants } from "@/lib/animations";
 import DiscordAuth from "./components/discord-auth";
@@ -42,8 +41,8 @@ function LoginFormContent({ providers }: LoginFormProps) {
   const [lastLogin, setLastLogin] = useState("");
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error");
-  const recaptcha = useGoogleReCaptcha();
-  const executeRecaptcha = recaptcha ? recaptcha.executeRecaptcha : undefined;
+  const turnstileRef = useRef<TurnstileInstance>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const hasSocialLogin = providers.google || providers.discord || providers.facebook;
 
@@ -83,19 +82,21 @@ function LoginFormContent({ providers }: LoginFormProps) {
     try {
       let fetchOptions: { headers?: Record<string, string> } = {};
 
-      if (executeRecaptcha) {
+      let token = captchaToken;
+      if (!token && turnstileRef.current) {
         try {
-          const captchaToken = await executeRecaptcha("sign_in");
-          if (captchaToken) {
-            fetchOptions = {
-              headers: {
-                "x-captcha-response": captchaToken,
-              },
-            };
-          }
-        } catch (captchaErr) {
-          console.error("reCAPTCHA execution error:", captchaErr);
+          token = (await turnstileRef.current.getResponsePromise(4000)) || null;
+        } catch {
+          // Token retrieval timed out or unavailable
         }
+      }
+
+      if (token) {
+        fetchOptions = {
+          headers: {
+            "x-captcha-response": token,
+          },
+        };
       }
 
       const isEmail = emailOrUsername.includes("@");
@@ -104,6 +105,8 @@ function LoginFormContent({ providers }: LoginFormProps) {
         : await signIn.username({ username: emailOrUsername, password }, fetchOptions);
 
       if (result.error) {
+        turnstileRef.current?.reset();
+        setCaptchaToken(null);
         if (result.error.code === "BANNED_USER") {
           router.push(`/banned?reason=${encodeURIComponent(result.error.message || "")}`);
           return;
@@ -112,6 +115,8 @@ function LoginFormContent({ providers }: LoginFormProps) {
       }
       else router.push("/dashboard");
     } catch (err) {
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
       setError("An error occurred during sign in");
       console.error(err);
     } finally {
@@ -238,7 +243,13 @@ function LoginFormContent({ providers }: LoginFormProps) {
                   </button>
                 </div>
 
-                <RecaptchaNotice />
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  action="sign_in"
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
               </div>
             </div>
 

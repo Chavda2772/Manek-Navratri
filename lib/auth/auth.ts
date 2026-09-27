@@ -272,10 +272,10 @@ export const auth = betterAuth({
     }),
     username(),
     nextCookies(),
-    ...((envServer.CPATCHA_SECRET_KEY) ? [
+    ...((envServer.TURNSTILE_SECRET_KEY && envServer.NEXT_PUBLIC_TURNSTILE_SITE_KEY) ? [
       captcha({
-        provider: "google-recaptcha",
-        secretKey: envServer.CPATCHA_SECRET_KEY!,
+        provider: "cloudflare-turnstile",
+        secretKey: envServer.TURNSTILE_SECRET_KEY as string,
         endpoints: [
           "/sign-in/email",
           "/sign-in/username",

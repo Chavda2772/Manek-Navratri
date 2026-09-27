@@ -27,12 +27,12 @@ const envSchema = zod.object({
   FACEBOOK_CLIENT_ID: zod.string().optional(),
   FACEBOOK_CLIENT_SECRET: zod.string().optional(),
 
-  //  Captcha
-  CAPTCHA_SITE_KEY: zod.string().optional(),
-  CPATCHA_SECRET_KEY: zod.string().optional()
+  //  Cloudflare Turnstile 
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: zod.string().optional(),
+  TURNSTILE_SECRET_KEY: zod.string().optional(),
 })
 
-/**
+/**`
  * Note: Use getAppConfig() from @/lib/app-config to get the final merged
  * configuration (Database + Env Fallback). This envServer only validates
  * the base environment variables.

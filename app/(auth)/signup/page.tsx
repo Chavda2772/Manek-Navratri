@@ -1,19 +1,18 @@
 "use client";
 
 // Lib
-import { RecaptchaNotice } from "@/components/auth/recaptcha-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { containerVariants, floatAnimate, floatTransition, itemVariants } from "@/lib/animations";
 import { authClient } from "@/lib/auth/auth-client";
 import { envClient } from "@/lib/env.client";
+import { TurnstileWidget, type TurnstileInstance } from "@/components/auth/turnstile";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Eye, EyeOff, Loader2, Mail, User, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function SignupPage() {
@@ -33,8 +32,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const recaptcha = useGoogleReCaptcha();
-  const executeRecaptcha = recaptcha ? recaptcha.executeRecaptcha : undefined;
+  const turnstileRef = useRef<TurnstileInstance>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     authClient.getSession()
@@ -120,17 +119,20 @@ export default function SignupPage() {
 
     try {
       let fetchOptions: { headers?: Record<string, string> } = {};
-      if (executeRecaptcha) {
+
+      let token = captchaToken;
+      if (!token && turnstileRef.current) {
         try {
-          const captchaToken = await executeRecaptcha("sign_up");
-          if (captchaToken) {
-            fetchOptions = {
-              headers: { "x-captcha-response": captchaToken },
-            };
-          }
-        } catch (captchaErr) {
-          console.error("CAPTCHA token generation error:", captchaErr);
+          token = (await turnstileRef.current.getResponsePromise(4000)) || null;
+        } catch {
+          // Token retrieval timed out or unavailable
         }
+      }
+
+      if (token) {
+        fetchOptions = {
+          headers: { "x-captcha-response": token },
+        };
       }
 
       const result = await authClient.signUp.email({
@@ -141,12 +143,16 @@ export default function SignupPage() {
       }, fetchOptions);
 
       if (result.error) {
+        turnstileRef.current?.reset();
+        setCaptchaToken(null);
         setError(result.error.message || "Signup failed");
       } else {
         toast.success("Registration successful! Please check your email for a link to confirm your account.")
         router.push("/login");
       }
     } catch (err) {
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
       setError("An error occurred during signup");
       console.error(err);
     } finally {
@@ -338,7 +344,13 @@ export default function SignupPage() {
                   </div>
                 </div>
               </div>
-              <RecaptchaNotice />
+              <TurnstileWidget
+                ref={turnstileRef}
+                action="sign_up"
+                onSuccess={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+                onError={() => setCaptchaToken(null)}
+              />
             </div>
 
             <Button
