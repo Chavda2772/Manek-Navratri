@@ -1,7 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth/auth-client";
-import { UserRole } from "@/lib/generated/prisma/enums";
+import { hasAnyRole, hasRole } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
 import { cn, getFileUrl } from "@/lib/utils";
 import { useDeviceSessions, useSetActiveSession } from "@/tanstacks/user";
@@ -25,7 +25,8 @@ import {
 export default function ProfileAvatar() {
     const { data: session } = authClient.useSession();
     const { data: deviceSessions } = useDeviceSessions();
-    const isAdmin = session?.user?.role === UserRole.admin;
+    const isAdmin = hasRole(session?.user?.role, "admin");
+    const canAccessAdmin = hasAnyRole(session?.user?.role, ["admin", "moderator"]);
     const { mutate: setActive } = useSetActiveSession();
     const router = useRouter();
 
@@ -139,7 +140,7 @@ export default function ProfileAvatar() {
                     <span>{tran("profile.manage_profile")}</span>
                 </DropdownMenuItem>
 
-                {isAdmin ? (
+                {canAccessAdmin ? (
                     <DropdownMenuItem onClick={() => router.push("/admin")} className="cursor-pointer py-2">
                         <UserRoundCog className="h-4 w-4 mr-2" />
                         <span>{tran("nav.admin")}</span>

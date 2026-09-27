@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth/auth-client";
+import { hasRole, parseRoles, Role } from "@/lib/auth/permissions";
 import {
     Activity,
     Ban,
@@ -29,12 +30,13 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
+import { UserStatus } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
 import { getFileUrl } from "@/lib/utils";
 import { useComprehensiveDeleteUser } from "@/tanstacks/admin";
 import { getInitials } from "@/utility/common-function";
 import { useRouter } from "next/navigation";
+import { UserRoleModal } from "./user-role-modal";
 import { UserStatusModal } from "./user-status-modal";
 
 interface User {
@@ -64,6 +66,9 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
     // User Status Update
     const [selectedUserForStatus, setSelectedUserForStatus] = useState<User | null>(null);
 
+    // User Role Update
+    const [selectedUserForRole, setSelectedUserForRole] = useState<User | null>(null);
+
     const handleAction = async (userId: string, action: () => Promise<any>, successMsg: string) => {
         setActionLoading(userId);
         try {
@@ -79,14 +84,6 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
         } finally {
             setActionLoading(null);
         }
-    };
-
-    const setRole = async (userId: string, role: string) => {
-        await handleAction(
-            userId,
-            () => authClient.admin.setRole({ userId, role: role as any }),
-            tran("admin.user_mng.msg.success_role_updated", { role })
-        );
     };
 
     const banUser = async (userId: string) => {
@@ -149,16 +146,20 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
         );
     };
 
-    const getRoleBadge = (role: string) => {
-        const r = role.toLowerCase();
-        switch (r) {
-            case "admin":
-                return <Badge key={r} variant="secondary" className="bg-indigo-500/10 text-indigo-500 border-none text-[9px] font-black tracking-widest h-5 px-2">Admin</Badge>;
-            case "user":
-                return null;
-            default:
-                return <Badge key={r} variant="secondary" className="bg-muted text-muted-foreground border-none text-[9px] font-black tracking-widest h-5 px-2">{role}</Badge>;
-        }
+    const getRoleBadges = (roleString?: string | null) => {
+        const userRoles = parseRoles(roleString);
+        return userRoles.map((r) => {
+            switch (r) {
+                case "admin":
+                    return <Badge key={r} variant="secondary" className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 text-[9px] font-black tracking-widest h-5 px-2">Admin</Badge>;
+                case "moderator":
+                    return <Badge key={r} variant="secondary" className="bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-black tracking-widest h-5 px-2">Moderator</Badge>;
+                case "user":
+                    return userRoles.length === 1 ? null : <Badge key={r} variant="secondary" className="bg-muted text-muted-foreground border border-border/40 text-[9px] font-black tracking-widest h-5 px-2">User</Badge>;
+                default:
+                    return <Badge key={r} variant="secondary" className="bg-muted text-muted-foreground border-none text-[9px] font-black tracking-widest h-5 px-2">{r}</Badge>;
+            }
+        });
     };
 
     return (
@@ -208,7 +209,7 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
                                 </Badge>
                             )}
                             <div className="flex flex-wrap gap-1">
-                                {user.role && getRoleBadge(user.role)}
+                                {getRoleBadges(user.role)}
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -256,30 +257,18 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
 
                                 {/* Role Management */}
                                 <DropdownMenuItem
-                                    onClick={() => setRole(user.id, user.role === UserRole.admin ? UserRole.user : UserRole.admin)}
-                                    className="group rounded-2xl gap-3 p-2.5 focus:bg-indigo-600 focus:text-white transition-all duration-300 cursor-pointer active:scale-95"
+                                    onClick={() => setSelectedUserForRole(user)}
+                                    className="group rounded-2xl gap-3 p-2.5 focus:bg-indigo-600 focus:text-white transition-all duration-300 cursor-pointer active:scale-95 mt-1"
                                 >
-                                    {user.role === UserRole.admin ? (
-                                        <>
-                                            <div className="p-2.5 rounded-xl group-focus:bg-white/20 transition-colors">
-                                                <UserMinus size={18} className="group-focus:text-white" />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-[13px] tracking-tight">{tran("admin.user_mng.demote_to_user")}</span>
-                                                <span className="text-[10px] opacity-70 font-medium group-focus:text-white/80">{tran("admin.user_mng.demote_desc")}</span>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="p-2.5 bg-indigo-500/10 rounded-xl transition-colors">
-                                                <Shield size={18} className="group-focus:text-white" />
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-[13px] tracking-tight">{tran("admin.user_mng.promote_to_admin")}</span>
-                                                <span className="text-[10px] opacity-70 font-medium group-focus:text-white/80">{tran("admin.user_mng.promote_desc")}</span>
-                                            </div>
-                                        </>
-                                    )}
+                                    <div className="p-2.5 bg-indigo-500/10 rounded-xl group-focus:bg-white/20 transition-colors">
+                                        <Shield size={18} className="text-indigo-600 group-focus:text-white" />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="font-bold text-[13px] tracking-tight">Manage Roles</span>
+                                        <span className="text-[10px] opacity-70 font-medium group-focus:text-white/80 capitalize">
+                                            {parseRoles(user.role).join(", ")}
+                                        </span>
+                                    </div>
                                 </DropdownMenuItem>
 
                                 {/* Impersonation */}
@@ -363,6 +352,12 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
             <UserStatusModal
                 user={selectedUserForStatus}
                 onClose={() => setSelectedUserForStatus(null)}
+                onSuccess={refetch}
+            />
+
+            <UserRoleModal
+                user={selectedUserForRole}
+                onClose={() => setSelectedUserForRole(null)}
                 onSuccess={refetch}
             />
         </>

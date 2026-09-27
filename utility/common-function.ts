@@ -14,6 +14,8 @@ export function getRoleBadgeColor(role: string) {
     switch (role?.toLowerCase()) {
         case "admin":
             return "bg-rose-500/10 text-rose-600 border-rose-200 dark:border-rose-900/50 dark:text-rose-400";
+        case "moderator":
+            return "bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-900/50 dark:text-amber-400";
         case "user":
             return "bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-900/50 dark:text-blue-400";
         default:

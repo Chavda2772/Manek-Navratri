@@ -9,14 +9,14 @@ import { AdminSkeleton } from "./components/admin-skeleton";
 // Hooks
 import { AppHeader } from "@/components/app-header";
 import { getUserSession } from "@/lib/auth/auth";
-import { UserRole } from "@/lib/generated/prisma/enums";
+import { hasAnyRole } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
 
 export default async function AdminPage() {
     const session = await getUserSession();
 
-    // Guard: Only admins can access this page
-    if (session?.user.role !== UserRole.admin) {
+    // Guard: Only admins and moderators can access this page
+    if (!hasAnyRole(session?.user?.role, ["admin", "moderator"])) {
         return <Restricted />;
     }
 

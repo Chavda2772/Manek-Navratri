@@ -3,7 +3,7 @@
 import { FooterButtons } from "@/components/footer-buttons";
 import AppTabs from "@/components/tab/app-tabs";
 import { Button } from "@/components/ui/button";
-import { UserRole } from "@/lib/generated/prisma/enums";
+import { hasRole } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
 import { useAdminUsers } from "@/tanstacks/admin";
 import { Database, Plus, Settings as SettingsIcon, Users } from "lucide-react";
@@ -24,7 +24,7 @@ export function AdminContent() {
     if (!users) return null;
 
     const totalUsers = users.length;
-    const adminUsers = users.filter((u: any) => u.role === UserRole.admin).length;
+    const adminUsers = users.filter((u: any) => hasRole(u.role, "admin")).length;
     const bannedUsers = users.filter((u: any) => u.banned).length;
     const activeUsers = totalUsers - bannedUsers;
 

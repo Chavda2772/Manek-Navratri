@@ -3,13 +3,14 @@
 import { deleteUser } from "@/actions/user.actions";
 import { getAppConfig } from "@/lib/app-config";
 import { auth, getUserSession } from "@/lib/auth/auth";
-import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
+import { hasAnyRole, hasRole } from "@/lib/auth/permissions";
+import { UserStatus } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma/prisma";
 import { headers } from "next/headers";
 
 export async function getAdminAppConfig() {
     const session = await getUserSession();
-    if (session?.user.role !== UserRole.admin)
+    if (!hasRole(session?.user?.role, "admin"))
         throw new Error("Unauthorized");
 
     return await getAppConfig();
@@ -17,7 +18,7 @@ export async function getAdminAppConfig() {
 
 export async function getAdminUsers() {
     const session = await getUserSession();
-    if (session?.user.role !== UserRole.admin)
+    if (!hasAnyRole(session?.user?.role, ["admin", "moderator"]))
         throw new Error("Unauthorized");
 
     const usersList = await auth.api.listUsers({
@@ -48,7 +49,7 @@ export async function getAdminUsers() {
 
 export async function comprehensiveDeleteUser(userId: string) {
     const session = await getUserSession();
-    if (session?.user.role !== UserRole.admin)
+    if (!hasRole(session?.user?.role, "admin"))
         throw new Error("Unauthorized");
 
     try {
@@ -62,7 +63,7 @@ export async function comprehensiveDeleteUser(userId: string) {
 
 export async function updateUserStatus(userId: string, status: UserStatus) {
     const session = await getUserSession();
-    if (session?.user.role !== UserRole.admin) throw new Error("Unauthorized");
+    if (!hasAnyRole(session?.user?.role, ["admin", "moderator"])) throw new Error("Unauthorized");
 
     try {
         await prisma.user.update({

@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { DocumentList } from "@/components/user/document-list";
 import { DocumentUpload } from "@/components/user/document-upload";
 import { userStatusList } from "@/lib/constants/common";
-import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
+import { UserStatus } from "@/lib/generated/prisma/enums";
+import { ALL_ROLES, parseRoles, Role } from "@/lib/auth/permissions";
 import { useCreateUser, useUpdateUser } from "@/tanstacks/user";
 import { getUniqueUserName } from "@/utility/common-function";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,6 +61,12 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
     const createUserMutation = useCreateUser();
     const updateUserMutation = useUpdateUser();
 
+    const initialRoleString = initialData
+        ? Array.isArray(initialData.roleTypes)
+            ? initialData.roleTypes.join(",")
+            : initialData.role || "user"
+        : "user";
+
     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
         defaultValues: initialData ? {
@@ -71,22 +78,28 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
             occupation: initialData.occupation || "",
             address: initialData.address || "",
             description: initialData.description || "",
-            role: initialData.roleTypes || UserRole.user
+            role: initialRoleString
         } : {
             status: UserStatus.pendingapproval,
-            role: UserRole.user,
+            role: "user",
             username: getUniqueUserName()
         }
     });
 
     const selectedRoles = watch("role");
+    const currentRolesList = parseRoles(selectedRoles);
 
-    const toggleRole = (role: string) => {
-        if (selectedRoles === role) {
-            setValue("role", "");
+    const toggleRole = (role: Role) => {
+        let updated: Role[];
+        if (currentRolesList.includes(role)) {
+            updated = currentRolesList.filter((r) => r !== role);
+            if (updated.length === 0) {
+                updated = ["user"];
+            }
         } else {
-            setValue("role", role);
+            updated = [...currentRolesList, role];
         }
+        setValue("role", updated.join(","), { shouldValidate: true });
     };
 
     const handleBack = () => {
@@ -112,7 +125,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
             if (isEdit) {
                 await updateUserMutation.mutateAsync({ id: initialData.id, data: values });
                 toast.success("User updated successfully");
-                router.push(`/user/${initialData.id}` as any);
+                router.push(`/admin/user/${initialData.id}` as any);
             } else {
                 await createUserMutation.mutateAsync(values);
                 toast.success("User created successfully");
@@ -217,9 +230,9 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Assigned Categories</Label>
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Assigned Categories (Roles)</Label>
                             <div className="flex flex-wrap gap-4 p-6 bg-muted/20 rounded-[2rem] border border-border/50">
-                                {["admin", "user"].map((role) => (
+                                {ALL_ROLES.map((role) => (
                                     <div
                                         key={role}
                                         className="flex items-center gap-3 bg-card px-5 py-3 rounded-2xl border border-border/50 shadow-xs cursor-pointer hover:border-primary/50 transition-all duration-300"
@@ -227,7 +240,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                                     >
                                         <Checkbox
                                             id={role}
-                                            checked={selectedRoles.includes(role)}
+                                            checked={currentRolesList.includes(role)}
                                             onCheckedChange={() => toggleRole(role)}
                                             className="h-5 w-5 rounded-md"
                                         />

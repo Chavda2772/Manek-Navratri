@@ -19,6 +19,7 @@ enum ThemeMode {
 enum UserRole {
   admin
   user
+  moderator
 }
 
 enum UserStatus {
@@ -51,7 +52,7 @@ model User {
   image            String?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
-  role             UserRole   @default(user)
+  role             String     @default("user")
   status           UserStatus @default(pendingapproval)
   banned           Boolean?   @default(false)
   banReason        String?

@@ -11,13 +11,15 @@ import { Input } from "@/components/ui/input";
 import {
     Check,
     Filter,
+    RotateCcw,
     Search,
     Shield,
     UserX
 } from "lucide-react";
 import { useState } from "react";
 
-import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
+import { hasRole, ROLES } from "@/lib/auth/permissions";
+import { UserStatus } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
 import { useAdminUsers } from "@/tanstacks/admin";
 import { UserCard } from "./user-card";
@@ -52,7 +54,7 @@ export function UserList() {
         const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) ||
             user.email?.toLowerCase().includes(search.toLowerCase());
 
-        const matchesRole = filterRole === "all" || user.role === filterRole;
+        const matchesRole = filterRole === "all" || hasRole(user.role, filterRole as any);
         const matchesStatus = filterStatus === "all" ||
             (filterStatus === "banned" ? user.banned : !user.banned);
 
@@ -61,6 +63,15 @@ export function UserList() {
 
         return matchesSearch && matchesRole && matchesStatus && matchesVerified;
     });
+
+    const isFilterApplied = search.trim() !== "" || filterRole !== "all" || filterStatus !== "all" || filterVerified !== "all";
+
+    const handleResetFilters = () => {
+        setSearch("");
+        setFilterRole("all");
+        setFilterStatus("all");
+        setFilterVerified("all");
+    };
 
 
 
@@ -90,8 +101,9 @@ export function UserList() {
                         />
                         <DropdownMenuContent className="rounded-2xl w-48 p-2 border-2 border-primary/5">
                             <DropdownMenuItem onClick={() => setFilterRole("all")} className="rounded-xl font-bold">{tran("admin.user_mng.all_roles")}</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilterRole(UserRole.admin)} className="rounded-xl font-bold text-indigo-600">{tran("admin.user_mng.admins_only")}</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilterRole(UserRole.user)} className="rounded-xl font-bold">{tran("admin.user_mng.users_only")}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterRole(ROLES.ADMIN)} className="rounded-xl font-bold text-indigo-600">{tran("admin.user_mng.admins_only")}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterRole(ROLES.MODERATOR)} className="rounded-xl font-bold text-amber-600">Moderators</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilterRole(ROLES.USER)} className="rounded-xl font-bold">{tran("admin.user_mng.users_only")}</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
@@ -126,6 +138,19 @@ export function UserList() {
                             <DropdownMenuItem onClick={() => setFilterVerified("unverified")} className="rounded-xl font-bold text-amber-600">{tran("admin.user_mng.unverified")}</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                    <div className="flex-1" />
+
+                    {isFilterApplied && (
+                        <Button
+                            variant="outline"
+                            onClick={handleResetFilters}
+                            className="flex-1 sm:flex-none h-11 rounded-2xl gap-2 px-5 border-2 border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 hover:border-rose-500/30 text-rose-600 dark:text-rose-400 shadow-sm text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer animate-in fade-in-50 zoom-in-95 duration-150"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                            {tran("admin.user_mng.reset_filters")}
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -144,6 +169,16 @@ export function UserList() {
                         <div className="text-center py-20 bg-muted/10 rounded-2xl border-2 border-dashed border-border/40">
                             <UserX className="mx-auto h-12 w-12 text-muted-foreground/10 mb-3" />
                             <p className="text-muted-foreground text-sm font-bold uppercase tracking-wider">{tran("admin.user_mng.no_matches")}</p>
+                            {isFilterApplied && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleResetFilters}
+                                    className="mt-4 h-10 rounded-xl gap-2 px-4 border-2 border-rose-500/20 text-rose-600 dark:text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 text-xs font-bold cursor-pointer"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    {tran("admin.user_mng.reset_filters")}
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         filteredUsers?.map((user) => (

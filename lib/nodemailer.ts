@@ -1,6 +1,6 @@
 import { createTransport, SentMessageInfo } from "nodemailer";
 import { getAppConfig } from "./app-config";
-import { UserRole } from "./generated/prisma/enums";
+import { hasRole } from "./auth/permissions";
 import { getUserSession } from "./auth/auth";
 import z from "zod";
 import { testSmtpSchema } from "./zod/email/smtpschema";
@@ -89,7 +89,7 @@ export async function sendMail({ sendTo, subject, htmlContent }: sendMailProp):
 export async function testSmtpConfig(data: z.infer<typeof testSmtpSchema>) {
   const session = await getUserSession();
 
-  if (session?.user.role !== UserRole.admin) {
+  if (!hasRole(session?.user?.role, "admin")) {
     throw new Error("Unauthorized");
   }
 

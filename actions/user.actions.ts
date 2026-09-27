@@ -1,8 +1,9 @@
 "use server";
 
 import { auth, getUserSession } from "@/lib/auth/auth";
+import { parseRoles, stringifyRoles } from "@/lib/auth/permissions";
 import { deleteDirectory, deleteFile, uploadFile } from "@/lib/file-operations";
-import { UserRole, UserStatus } from "@/lib/generated/prisma/enums";
+import { UserStatus } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma/prisma";
 import { headers } from "next/headers";
 
@@ -194,7 +195,7 @@ export async function getUserById(userId: string) {
         ...user,
         banned: user.banned ?? false,
         banReason: user.banReason ?? null,
-        roleTypes: [user.role || "user"],
+        roleTypes: parseRoles(user.role),
     };
 }
 
@@ -202,10 +203,33 @@ export async function removeUserRole(userId: string, roleToRemove: string) {
     const session = await getUserSession();
     if (!session) throw new Error("Unauthorized");
 
-    await prisma.account.deleteMany({ where: { userId } });
-    await prisma.session.deleteMany({ where: { userId } });
-    await prisma.user.delete({ where: { id: userId } });
-    return { success: true, deletedUser: true };
+    const targetUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true }
+    });
+
+    if (!targetUser) throw new Error("User not found");
+
+    const currentRoles = parseRoles(targetUser.role);
+    const updatedRoles = currentRoles.filter((r) => r.toLowerCase() !== roleToRemove.toLowerCase());
+
+    if (updatedRoles.length === 0) {
+        await prisma.account.deleteMany({ where: { userId } });
+        await prisma.session.deleteMany({ where: { userId } });
+        await prisma.user.delete({ where: { id: userId } });
+        return { success: true, deletedUser: true };
+    }
+
+    await prisma.user.update({
+        where: { id: userId },
+        data: { role: updatedRoles.sort().join(",") }
+    });
+
+    return {
+        success: true,
+        deletedUser: false,
+        remainingRoles: updatedRoles
+    };
 }
 
 export async function deleteUser(userId: string) {
@@ -281,7 +305,7 @@ export async function createUser(data: any) {
         roles
     } = data;
 
-    const userRole = role || (Array.isArray(roles) && roles.includes("admin") ? "admin" : "user");
+    const userRole = stringifyRoles(roles || role || "user");
 
     const user = await prisma.user.create({
         data: {
@@ -293,7 +317,7 @@ export async function createUser(data: any) {
             occupation: occupation || null,
             address: address || null,
             description: description || null,
-            role: userRole as UserRole || UserRole.user
+            role: userRole
         }
     });
 
@@ -301,8 +325,6 @@ export async function createUser(data: any) {
 }
 
 export async function updateUser(id: string, data: any) {
-    const session = await getUserSession();
-
     const {
         name,
         email,
@@ -316,7 +338,7 @@ export async function updateUser(id: string, data: any) {
         roles
     } = data;
 
-    const userRole = role || (Array.isArray(roles) && roles.includes("admin") ? "admin" : "user");
+    const userRole = stringifyRoles(roles || role || "user");
 
     const user = await prisma.user.update({
         where: { id },
@@ -329,7 +351,7 @@ export async function updateUser(id: string, data: any) {
             occupation: occupation || null,
             address: address || null,
             description: description || null,
-            role: userRole || "user"
+            role: userRole
         }
     });
 

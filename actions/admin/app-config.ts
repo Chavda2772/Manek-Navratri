@@ -2,9 +2,9 @@
 
 import { prisma } from "@/lib/prisma/prisma";
 import { getUserSession } from "@/lib/auth/auth";
+import { hasRole } from "@/lib/auth/permissions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { UserRole } from "@/lib/generated/prisma/enums";
 
 const appConfigSchema = z.object({
   smtpHost: z.string().optional().nullable(),
@@ -22,7 +22,7 @@ const appConfigSchema = z.object({
 export async function updateAppConfig(data: z.infer<typeof appConfigSchema>) {
   const session = await getUserSession();
 
-  if (session?.user.role !== UserRole.admin) {
+  if (!hasRole(session?.user?.role, "admin")) {
     throw new Error("Unauthorized");
   }
 

@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 // Lib
 import { sendMail } from "../nodemailer";
 import { prisma } from "../prisma/prisma";
+import { ac, parseRoles, roles } from "./permissions";
 
 // Template
 import { headers } from "next/headers";
@@ -193,7 +194,12 @@ export const auth = betterAuth({
     }
   },
   plugins: [
-    adminPlugin(),
+    adminPlugin({
+      ac,
+      roles,
+      defaultRole: "user",
+      adminRoles: ["admin", "moderator"],
+    }),
     twoFactor(),
     lastLoginMethod(),
     passkey(),
@@ -235,6 +241,7 @@ export const auth = betterAuth({
 
       const settings = dbUser?.userSettings;
       const dbSession = dbUser?.sessions[0];
+      const userRole = dbUser?.role ?? "user";
 
       return {
         session: {
@@ -254,7 +261,8 @@ export const auth = betterAuth({
         user: {
           ...user,
           status: dbUser?.status ?? UserStatus.pendingapproval,
-          role: dbUser?.role,
+          role: userRole,
+          roles: parseRoles(userRole),
           contactNo: dbUser?.contactNo,
           address: dbUser?.address,
           twoFactorEnabled: dbUser?.twoFactorEnabled ?? false,

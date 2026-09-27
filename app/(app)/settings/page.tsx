@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { signOut, useSession } from "@/lib/auth/auth-client";
+import { useSession } from "@/lib/auth/auth-client";
 import { envClient } from "@/lib/env.client";
 import { Currency, ThemeMode } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
@@ -324,7 +324,7 @@ export default function SettingsPage() {
           <Section title={tran("settings.security_privacy")}>
             <Row
               icon={Link2Icon}
-              label={tran("settings.connected_accounts")}
+              label={tran("settings.linked_accounts")}
               href="/settings/link-account"
             />
             <Row
