@@ -2,13 +2,15 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/admin/access";
 
 // 1. Define resources and allowable actions
-export const resourceStatement = {
+export const statement = {
   ...defaultStatements,
   storage: ["read", "write", "delete", "move"],
   config: ["read", "update"]
 } as const;
 
-export const ac = createAccessControl(resourceStatement);
+export type Statement = typeof statement;
+export type ResourceStatement = typeof statement;
+export const ac = createAccessControl(statement);
 
 // 2. Define roles as permission bundles
 export const userRole = ac.newRole({

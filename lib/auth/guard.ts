@@ -1,11 +1,39 @@
 import { headers } from "next/headers";
 import { auth } from "./auth";
-import { resourceStatement, roles, RoleName } from "./permissions";
-import { UserRole } from "../generated/prisma/enums";
+import { checkUserPermission, statement } from "./permissions";
 
-type PermissionsStatement = typeof resourceStatement;
-type Resource = keyof PermissionsStatement;
+export type PermissionsStatement = typeof statement;
+export type Resource = keyof PermissionsStatement;
 
+/**
+ * Check if the currently authenticated user has the required permission.
+ * Returns true if authorized, false otherwise. Does not throw.
+ */
+export async function hasPermission<R extends Resource>(
+    resource: R,
+    action: PermissionsStatement[R][number]
+): Promise<boolean> {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session?.user) {
+            return false;
+        }
+
+        return checkUserPermission(session.user.role, {
+            [resource]: [action],
+        } as any);
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Require permission for a server action or route.
+ * Throws "UNAUTHORIZED" or "FORBIDDEN" if authorization fails.
+ */
 export async function requirePermission<R extends Resource>(
     resource: R,
     action: PermissionsStatement[R][number]
@@ -18,15 +46,11 @@ export async function requirePermission<R extends Resource>(
         throw new Error("UNAUTHORIZED");
     }
 
-    const userRole = (session.user.role as RoleName) ?? UserRole.user;
-    const roleDefinition = roles[userRole];
-
-    // Validate action authorization for this role
-    const isAuthorized = roleDefinition?.authorize({
+    const isAuthorized = checkUserPermission(session.user.role, {
         [resource]: [action],
     } as any);
 
-    if (!isAuthorized?.success) {
+    if (!isAuthorized) {
         throw new Error("FORBIDDEN");
     }
 
