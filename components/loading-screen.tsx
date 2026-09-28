@@ -23,11 +23,9 @@ const MESSAGES = [
 ];
 
 export function LoadingScreen() {
-    const [message, setMessage] = useState("");
-    const [mounted, setMounted] = useState(false);
+    const [message, setMessage] = useState(MESSAGES[0]);
 
     useEffect(() => {
-        setMounted(true);
         setMessage(MESSAGES[Math.floor(Math.random() * MESSAGES.length)]);
 
         // Rotate messages every 3 seconds
@@ -38,11 +36,9 @@ export function LoadingScreen() {
         return () => clearInterval(interval);
     }, []);
 
-    if (!mounted) return null;
-
     return (
-        <div className="h-full w-full flex flex-col items-center justify-center bg-background overflow-hidden">
-            {/* Dynamic Background Elements */}
+        <div className="relative flex-1 min-h-[60vh] w-full flex flex-col items-center justify-center bg-background overflow-hidden py-12 my-auto">
+            {/* Dynamic Background Elements - strictly contained in center content */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <motion.div
                     animate={{

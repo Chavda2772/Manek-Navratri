@@ -11,10 +11,11 @@ import { QueryProvider } from "./query-provider";
 /* ========================================================= */
 
 export * from "./confirm-provider";
+export * from "./header-provider";
 export * from "./prompt-provider";
 export * from "./query-provider";
 export * from "./recaptcha-provider";
-export * from "./turnstile-provider";
+export { TurnstileProvider, useTurnstileContext } from "./turnstile-provider";
 
 /* ========================================================= */
 /* GLOBAL PROVIDER */
