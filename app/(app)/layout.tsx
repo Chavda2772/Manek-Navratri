@@ -11,8 +11,6 @@ import { ImpersonationIndicator } from "@/components/auth/impersonation-indicato
 import { LayoutTransitions } from "@/components/layout-transitions";
 import { NavBar } from "@/components/navbar/nav-bar";
 import { UserConfigProvider } from "@/components/providers/user-config-provider";
-import { HeaderProvider, PersistentHeader } from "@/components/providers/header-provider";
-import { AppContentScrollArea } from "@/components/app-content-scroll-area";
 import { UserStatus } from "@/lib/generated/prisma/enums";
 import { getDefaultConfig, getUserConfig } from "@/lib/user-config";
 
@@ -31,31 +29,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (session.user.status === UserStatus.suspended) redirect("/suspended");
 
   // User Config
-  const userConfig = await getUserConfig() ?? getDefaultConfig();
+  const userConfig = await getUserConfig() ?? getDefaultConfig()
 
   return (
     <UserConfigProvider config={userConfig}>
-      <HeaderProvider>
-        <div className="h-screen bg-background text-foreground transition-colors duration-300 overflow-hidden">
-          <div className="flex h-full">
-            <NavBar />
+      <div className="h-screen bg-background text-foreground transition-colors duration-300 overflow-hidden">
+        <div className="flex h-full">
+          <NavBar />
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-              <PersistentHeader />
-
-              <AppContentScrollArea>
-                <LayoutTransitions>
-                  {children}
-                </LayoutTransitions>
-              </AppContentScrollArea>
-            </div>
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">
+            <LayoutTransitions>
+              {children}
+            </LayoutTransitions>
           </div>
-
-          {/* Only when admin is impersonating */}
-          <ImpersonationIndicator />
         </div>
-      </HeaderProvider>
-    </UserConfigProvider>
+
+        {/* Only when admin is impersonating */}
+        <ImpersonationIndicator />
+      </div>
+
+    </UserConfigProvider >
   );
 }
+
