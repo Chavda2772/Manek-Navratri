@@ -11,25 +11,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
-import { useNavItems } from "./navbar/use-nav-items";
-import { useHeader, useSetHeaderConfig } from "./providers/header-provider";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { useNavItems } from "../navbar/use-nav-items";
+import { useHeader, useSetHeaderConfig } from "../providers/header-provider";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "../ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "./ui/sheet";
-import ProfileAvatar from "./user/profile-avatar";
-import type { HeaderConfig, HeaderMenuItem } from "@/lib/header-config";
+} from "../ui/sheet";
+import ProfileAvatar from "../user/profile-avatar";
+import type { HeaderConfig, HeaderMenuItem } from "@/components/header/header-config";
 
 export interface AppHeaderProps {
   title?: string;

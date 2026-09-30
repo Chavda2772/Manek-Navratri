@@ -10,7 +10,7 @@ import { isSetupRequired } from "@/lib/setup";
 import { ImpersonationIndicator } from "@/components/auth/impersonation-indicator";
 import { LayoutTransitions } from "@/components/layout-transitions";
 import { NavBar } from "@/components/navbar/nav-bar";
-import { AppHeader } from "@/components/app-header";
+import { AppHeader } from "@/components/header/app-header";
 import { AppContentScrollArea } from "@/components/app-content-scroll-area";
 import { HeaderProvider } from "@/components/providers/header-provider";
 import { UserConfigProvider } from "@/components/providers/user-config-provider";

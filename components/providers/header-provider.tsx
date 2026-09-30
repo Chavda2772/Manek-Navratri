@@ -4,7 +4,7 @@ import {
   getHeaderConfigForPath,
   type HeaderConfig,
   type HeaderMenuItem,
-} from "@/lib/header-config";
+} from "@/components/header/header-config";
 import { usePathname } from "next/navigation";
 import {
   createContext,

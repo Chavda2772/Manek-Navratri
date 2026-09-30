@@ -35,7 +35,7 @@ export const headerRoutesConfig: HeaderRouteRule[] = [
   {
     pattern: "/admin",
     title: "admin.title",
-    showBack: false,
+    showBack: true,
     showMobileNav: true,
   },
   // Admin User Add

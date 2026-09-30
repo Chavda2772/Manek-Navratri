@@ -1,6 +1,6 @@
 "use client";
 
-import type { HeaderMenuItem } from "@/lib/header-config";
+import type { HeaderMenuItem } from "@/components/header/header-config";
 import type { Route } from "next";
 import { AppHeader } from "./app-header";
 

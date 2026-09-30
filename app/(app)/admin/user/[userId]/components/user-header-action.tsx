@@ -1,6 +1,6 @@
 "use client";
 
-import { BackHeader } from "@/components/back-header";
+import { BackHeader } from "@/components/header/back-header";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
