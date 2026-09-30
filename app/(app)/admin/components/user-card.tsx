@@ -36,9 +36,18 @@ import { tran } from "@/lib/languages/i18n";
 import { cn, getFileUrl } from "@/lib/utils";
 import { useComprehensiveDeleteUser } from "@/tanstacks/admin";
 import { getInitials } from "@/utility/common-function";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { UserRoleModal } from "./user-role-modal";
-import { UserStatusModal } from "./user-status-modal";
+
+const UserRoleModal = dynamic(
+    () => import("./user-role-modal").then((m) => m.UserRoleModal),
+    { ssr: false }
+);
+
+const UserStatusModal = dynamic(
+    () => import("./user-status-modal").then((m) => m.UserStatusModal),
+    { ssr: false }
+);
 
 interface User {
     id: string;

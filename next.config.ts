@@ -18,20 +18,34 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   compress: true,
+  poweredByHeader: false,
   typedRoutes: true,
+  serverExternalPackages: [
+    "@prisma/client",
+    "prisma",
+    "nodemailer",
+    "pg",
+    "jimp",
+  ],
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
   experimental: {
     optimizePackageImports: [
       "lucide-react",
       "date-fns",
       "framer-motion",
       "@base-ui/react",
-      "recharts",
-      "jspdf",
-      "jspdf-autotable",
       "sonner",
+      "react-day-picker",
+      "@tanstack/react-query",
+      "better-auth",
+      "@better-auth/passkey",
     ],
   },
   images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400,
     remotePatterns: [
       {
         protocol: "https",
@@ -42,7 +56,7 @@ const nextConfig: NextConfig = {
         hostname: "cdn.discordapp.com",
       },
     ],
-  }
+  },
 };
 
 // let finalConfig = nextConfig;

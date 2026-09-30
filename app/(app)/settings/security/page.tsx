@@ -8,9 +8,22 @@ import { tran } from "@/lib/languages/i18n";
 import { useListUserAccounts } from "@/tanstacks/settings";
 import { motion } from "framer-motion";
 import { Key, Lock, ShieldCheck } from "lucide-react";
-import { PasskeyTab } from "./components/passkey-tab";
+import dynamic from "next/dynamic";
 import { SecureTab } from "./components/secure-tab";
-import { TwoFactorTab } from "./components/two-factor-tab";
+
+const TwoFactorTab = dynamic(
+    () => import("./components/two-factor-tab").then((m) => m.TwoFactorTab),
+    {
+        loading: () => <Skeleton className="h-64 w-full rounded-3xl" />,
+    }
+);
+
+const PasskeyTab = dynamic(
+    () => import("./components/passkey-tab").then((m) => m.PasskeyTab),
+    {
+        loading: () => <Skeleton className="h-64 w-full rounded-3xl" />,
+    }
+);
 
 export default function SecurityPage() {
     const { data: session, isPending: isSessionPending } = useSession();

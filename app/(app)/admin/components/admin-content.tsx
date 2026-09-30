@@ -7,12 +7,25 @@ import { hasRole } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
 import { useAdminUsers } from "@/tanstacks/admin";
 import { Database, Plus, Settings as SettingsIcon, Users } from "lucide-react";
+import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import { AdminSkeleton } from "./admin-skeleton";
 import { AdminStats } from "./admin-stats";
-import { AppSettingsTab } from "./app-settings-tab";
-import { AdminStorageManager } from "./storage-manager";
 import { UserList } from "./user-list";
+
+const AppSettingsTab = dynamic(
+    () => import("./app-settings-tab").then((mod) => mod.AppSettingsTab),
+    {
+        loading: () => <AdminSkeleton />,
+    }
+);
+
+const AdminStorageManager = dynamic(
+    () => import("./storage-manager").then((mod) => mod.AdminStorageManager),
+    {
+        loading: () => <AdminSkeleton />,
+    }
+);
 
 export function AdminContent() {
     const { data: users, isLoading } = useAdminUsers();
