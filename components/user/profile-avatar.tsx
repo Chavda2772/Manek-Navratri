@@ -1,7 +1,8 @@
 "use client";
 
 import { authClient } from "@/lib/auth/auth-client";
-import { hasAnyRole, hasRole } from "@/lib/auth/permissions";
+import { hasRole } from "@/lib/auth/permissions";
+import { UserRole } from "@/lib/generated/prisma/enums";
 import { tran } from "@/lib/languages/i18n";
 import { cn, getFileUrl } from "@/lib/utils";
 import { useDeviceSessions, useSetActiveSession } from "@/tanstacks/user";
@@ -21,7 +22,6 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger
 } from "../ui/dropdown-menu";
-import { UserRole } from "@/lib/generated/prisma/enums";
 
 export default function ProfileAvatar() {
     const { data: session } = authClient.useSession();

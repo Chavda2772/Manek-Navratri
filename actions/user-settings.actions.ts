@@ -59,13 +59,6 @@ export async function getListSessions() {
   });
 }
 
-export async function getCredientialAccounts() {
-  const accounts = await auth.api.listUserAccounts({
-    headers: await headers(),
-  });
-  return accounts.filter(a => a.providerId !== "credential");
-}
-
 export async function getAppVersion() {
   return packageJson.version;
 }

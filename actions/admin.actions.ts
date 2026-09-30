@@ -1,7 +1,6 @@
 "use server";
 
 import { deleteUser } from "@/actions/user.actions";
-import { getAppConfig } from "@/lib/app-config";
 import { auth } from "@/lib/auth/auth";
 import { requirePermission } from "@/lib/auth/guard";
 import { UserStatus } from "@/lib/generated/prisma/enums";

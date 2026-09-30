@@ -1,8 +1,6 @@
 "use server";
 
-import { getUserSession } from "@/lib/auth/auth";
 import { requirePermission } from "@/lib/auth/guard";
-import { hasRole } from "@/lib/auth/permissions";
 import {
     deleteDirectory,
     deleteFile,

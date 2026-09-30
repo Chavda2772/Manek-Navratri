@@ -2,7 +2,7 @@
 
 import { auth, getUserSession } from "@/lib/auth/auth";
 import { parseRoles, stringifyRoles } from "@/lib/auth/permissions";
-import { deleteDirectory, deleteFile, uploadFile } from "@/lib/file-operations";
+import { deleteFile, uploadFile } from "@/lib/file-operations";
 import { UserStatus } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma/prisma";
 import { deleteUserAndAllData } from "@/lib/user-cleanup";
@@ -95,85 +95,6 @@ export async function uploadProfileImage(formData: FormData, userId?: string) {
     return { filePath: dbPath };
 }
 
-export async function updateUserStatus(userId: string, status: string) {
-    return prisma.user.update({
-        where: { id: userId },
-        data: { status: status as any }
-    });
-}
-
-export async function updateUserRole(userId: string, role: string) {
-    const session = await getUserSession();
-    if (!session) throw new Error("Unauthorized");
-
-    return await prisma.user.update({
-        where: { id: userId },
-        data: {
-            role: role === "admin" ? "admin" : "user"
-        }
-    });
-}
-
-export async function getUsersByType(type: string) {
-    return prisma.user.findMany({
-        where: {
-            role: (type === "admin" || type === "user") ? type : undefined
-        },
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            contactNo: true,
-            createdAt: true,
-            occupation: true,
-            address: true
-        }
-    });
-}
-
-// Get list of Clients (including admins)
-export async function getClients() {
-    return prisma.user.findMany({
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            contactNo: true,
-            createdAt: true,
-            occupation: true,
-            address: true
-        }
-    });
-}
-
-// Get List of Agents (including admins)
-export async function getAgents() {
-    return prisma.user.findMany({
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            contactNo: true,
-            occupation: true
-        }
-    });
-}
-
-// Get List of Owners (including admins)
-export async function getOwners() {
-    return prisma.user.findMany({
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            contactNo: true
-        }
-    });
-}
 
 export async function getUserById(userId: string) {
     const session = await getUserSession();
@@ -263,7 +184,7 @@ export async function confirmDeleteAccountWithToken(token: string) {
         // Delete verification record
         await prisma.verification.delete({
             where: { id: verification.id }
-        }).catch(() => {});
+        }).catch(() => { });
 
         // Clear session cookies
         const cookieStore = await cookies();
@@ -422,22 +343,6 @@ export async function renameUserDocument(documentId: string, newName: string) {
     return prisma.userDocument.update({
         where: { id: documentId },
         data: { fileName: newName }
-    });
-}
-
-export async function getAllUsers() {
-    return prisma.user.findMany({
-        select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            contactNo: true,
-            createdAt: true,
-            occupation: true,
-            address: true,
-            role: true
-        }
     });
 }
 
