@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { sendMail } from "../nodemailer";
 import { prisma } from "../prisma/prisma";
 import { ac, parseRoles, roles } from "./permissions";
+import { deleteUserPhysicalFiles } from "../user-cleanup";
 
 // Template
 import { headers } from "next/headers";
@@ -48,9 +49,12 @@ export const auth = betterAuth({
     },
     deleteUser: {
       enabled: true,
-      sendDeleteAccountVerification: async ({ user, url }) => {
+      sendDeleteAccountVerification: async ({ user, url, token }: any) => {
         try {
-          const emailHtml = getDeleteAccountEmailHtml(user.email, url)
+          const confirmUrl = token
+            ? `${envServer.BETTER_AUTH_URL}/confirm-delete-account?token=${token}`
+            : url;
+          const emailHtml = getDeleteAccountEmailHtml(user.email, confirmUrl);
 
           const { data, error } = await sendMail({
             sendTo: user.email,
@@ -59,20 +63,29 @@ export const auth = betterAuth({
           });
 
           if (error) {
-            console.error("Failed to send delete account email:", error)
-            throw new Error("Failed to send delete account email")
+            console.error("Failed to send delete account email:", error);
+            throw new Error("Failed to send delete account email");
           }
 
-          console.log("Delete account confirmation email sent to:", user.email)
-          console.log("Email ID:", data?.id)
+          console.log("Delete account confirmation email sent to:", user.email);
+          console.log("Email ID:", data?.id);
 
           // Dev-only helper
           if (envServer.NODE_ENV === "development") {
-            console.log("Delete confirmation URL (dev only):", url)
+            console.log("Delete confirmation URL (dev only):", confirmUrl);
           }
         } catch (error) {
-          console.error("Error in sendDeleteAccountVerification:", error)
-          throw error
+          console.error("Error in sendDeleteAccountVerification:", error);
+          throw error;
+        }
+      },
+      beforeDelete: async (user: any) => {
+        try {
+          if (user?.id) {
+            await deleteUserPhysicalFiles(user.id);
+          }
+        } catch (e) {
+          console.error("Error cleaning up user files before delete:", e);
         }
       }
     },
