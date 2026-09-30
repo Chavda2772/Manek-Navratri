@@ -221,6 +221,8 @@ export default {
             ban_desc: "Restrict access",
             delete_user: "Delete User",
             delete_desc: "Permanent removal",
+            edit_user: "Edit User",
+            edit_desc: "Modify user profile & details",
             ban_user_prompt_title: "Ban User",
             ban_user_prompt_desc: "Please provide a reason for banning this user. This will be visible to the user.",
             ban_user_prompt_placeholder: "e.g. Violation of terms, Spamming...",

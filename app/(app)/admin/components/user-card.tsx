@@ -19,6 +19,7 @@ import {
     Ban,
     Check,
     MoreHorizontal,
+    Pencil,
     Phone,
     RefreshCw,
     Shield,
@@ -225,7 +226,7 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
                     </div>
                 </div>
 
-                <div className="flex items-center gap-8" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-2 sm:gap-3" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
@@ -241,6 +242,20 @@ export function UserCard({ user, refetch }: { user: User, refetch: () => void })
                         />
                         <DropdownMenuContent align="end" className="w-60 rounded-3xl p-2 border-none shadow-2xl bg-background/95 backdrop-blur-xl">
                             <DropdownMenuGroup>
+                                {/* Edit User */}
+                                <DropdownMenuItem
+                                    onClick={() => router.push(`/admin/user/${user.id}/edit`)}
+                                    className="group rounded-2xl gap-3 p-2.5 focus:bg-blue-600 focus:text-white transition-all duration-300 cursor-pointer active:scale-95 mt-1"
+                                >
+                                    <div className="p-2.5 bg-blue-500/10 rounded-xl group-focus:bg-white/20 transition-colors">
+                                        <Pencil size={18} className="text-blue-600 group-focus:text-white" />
+                                    </div>
+                                    <div className="flex flex-col text-left">
+                                        <span className="font-bold text-[13px] tracking-tight">{tran("admin.user_mng.edit_user")}</span>
+                                        <span className="text-[10px] opacity-70 font-medium group-focus:text-white/80">{tran("admin.user_mng.edit_desc")}</span>
+                                    </div>
+                                </DropdownMenuItem>
+
                                 <DropdownMenuItem
                                     onClick={() => {
                                         setSelectedUserForStatus(user);
