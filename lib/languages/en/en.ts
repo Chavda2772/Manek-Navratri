@@ -99,6 +99,10 @@ export default {
             password_not_set: "Password Not Set",
             password_not_set_description: "You currently sign in using a connected social account. Setting a master password provides an alternative way to access your dashboard.",
             initialize_password_setup: "Initialize Password Setup",
+            or_forgot_password: "Or Forgot Password",
+            forgot_password_title: "Reset Password via Email",
+            forgot_password_description: "Can't remember your current password? We'll send a secure password reset link to your registered email address.",
+            send_reset_link: "Send Reset Password Link",
             required: "Required",
             min_length_8: "Must be at least 8 characters long",
             msg: {

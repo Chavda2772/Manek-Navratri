@@ -1,9 +1,8 @@
 "use client";
 
-import type { Route } from "next";
-import { ReactNode } from "react";
-import { AppHeader } from "./app-header";
 import type { HeaderMenuItem } from "@/lib/header-config";
+import type { Route } from "next";
+import { AppHeader } from "./app-header";
 
 export interface HeaderProps {
   title?: string;
