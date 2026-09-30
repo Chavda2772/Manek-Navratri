@@ -1,4 +1,3 @@
-import { AppHeader } from "@/components/app-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getUserSession } from "@/lib/auth/auth";
@@ -15,10 +14,7 @@ export default async function Page() {
   const userRole = session?.user.role || "user";
 
   return (
-    <>
-      <AppHeader title="dashboard.title" />
-
-      <div className="flex-1 px-4 space-y-6 sm:space-y-8 pb-34 max-w-5xl mx-auto w-full">
+    <div className="flex-1 px-4 space-y-6 sm:space-y-8 pb-34 max-w-5xl mx-auto w-full">
         <DashboardClient firstName={firstName} email={session?.user.email} />
 
         {/* Permission Gate Testing Suite */}
@@ -180,6 +176,5 @@ export default async function Page() {
 
         <DashboardInteractions />
       </div>
-    </>
   );
 }

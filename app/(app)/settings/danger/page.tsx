@@ -1,7 +1,6 @@
 "use client";
 
 import { BetterAuthActionButton } from '@/components/auth/better-auth-action-button';
-import { BackHeader } from "@/components/back-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { containerVariants } from '@/lib/animations';
 import { authClient, useSession } from "@/lib/auth/auth-client";
@@ -18,11 +17,6 @@ export default function DangerPage() {
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            <BackHeader
-                title={tran("danger.title")}
-                backUrl="/settings"
-            />
-
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -76,7 +70,6 @@ export default function DangerPage() {
 function DangerSkeleton() {
     return (
         <div className="min-h-screen bg-background">
-            <BackHeader title={tran("danger.title")} />
             <div className="mx-auto max-w-lg p-6 mt-6 space-y-8">
                 <div className="space-y-4">
                     <Skeleton className="h-48 w-full rounded-[2.5rem]" />

@@ -1,6 +1,5 @@
 "use client";
 
-import { BackHeader } from "@/components/back-header";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/providers/confirm-provider";
 import { containerVariants, itemVariants } from "@/lib/animations";
@@ -42,8 +41,6 @@ export default function LogoutPage() {
 
     return (
         <div className="min-h-screen bg-background pb-20 select-none">
-            <BackHeader title="Logout" backUrl="/dashboard" />
-
             <motion.div
                 variants={containerVariants}
                 initial="hidden"

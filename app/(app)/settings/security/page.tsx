@@ -1,6 +1,5 @@
 "use client";
 
-import { BackHeader } from "@/components/back-header";
 import AppTabs from "@/components/tab/app-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { containerVariants } from "@/lib/animations";
@@ -25,11 +24,6 @@ export default function SecurityPage() {
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            <BackHeader
-                title={tran("security.title")}
-                backUrl="/settings"
-            />
-
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -80,7 +74,6 @@ export default function SecurityPage() {
 function SecuritySkeleton() {
     return (
         <div className="min-h-screen bg-background">
-            <BackHeader title={tran("security.title")} />
             <div className="mx-auto max-w-lg p-6 mt-6 space-y-8">
                 <div className="space-y-4">
                     <Skeleton className="h-5 w-40" />

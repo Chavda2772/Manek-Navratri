@@ -7,7 +7,6 @@ import { AdminContent } from "./components/admin-content";
 import { AdminSkeleton } from "./components/admin-skeleton";
 
 // Hooks
-import { AppHeader } from "@/components/app-header";
 import { getUserSession } from "@/lib/auth/auth";
 import { hasAnyRole } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
@@ -22,12 +21,9 @@ export default async function AdminPage() {
     }
 
     return (
-        <>
-            <AppHeader title={tran("admin.title")} />
-            <Suspense fallback={<AdminSkeleton />}>
-                <AdminContent />
-            </Suspense>
-        </>
+        <Suspense fallback={<AdminSkeleton />}>
+            <AdminContent />
+        </Suspense>
     );
 }
 

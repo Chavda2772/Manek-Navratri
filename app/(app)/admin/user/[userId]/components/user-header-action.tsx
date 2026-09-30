@@ -85,6 +85,7 @@ export function UserHeader({ userId, hasImage }: UserHeaderMenuProps) {
         <>
             <BackHeader
                 title={"User Details"}
+                showProfile={false}
                 menuItems={[
                     {
                         label: "Refresh",
