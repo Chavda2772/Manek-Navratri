@@ -208,6 +208,7 @@ export async function createUser(data: any) {
     const {
         name,
         email,
+        emailVerified,
         contactNo,
         username,
         status,
@@ -219,11 +220,17 @@ export async function createUser(data: any) {
     } = data;
 
     const userRole = stringifyRoles(roles || role || "user");
+    const isEmailVerified = typeof emailVerified === "boolean"
+        ? emailVerified
+        : emailVerified !== undefined
+            ? (emailVerified === "true" || emailVerified === "yes")
+            : false;
 
     const user = await prisma.user.create({
         data: {
             name,
             email: email || null,
+            emailVerified: isEmailVerified,
             contactNo: contactNo || null,
             username: username || null,
             status: status || UserStatus.pendingapproval,
@@ -241,6 +248,7 @@ export async function updateUser(id: string, data: any) {
     const {
         name,
         email,
+        emailVerified,
         contactNo,
         username,
         status,
@@ -252,12 +260,18 @@ export async function updateUser(id: string, data: any) {
     } = data;
 
     const userRole = stringifyRoles(roles || role || "user");
+    const resolvedEmailVerified = typeof emailVerified === "boolean"
+        ? emailVerified
+        : emailVerified !== undefined
+            ? (emailVerified === "true" || emailVerified === "yes")
+            : undefined;
 
     const user = await prisma.user.update({
         where: { id },
         data: {
             name,
             email: email || null,
+            ...(resolvedEmailVerified !== undefined ? { emailVerified: resolvedEmailVerified } : {}),
             contactNo: contactNo || null,
             username: username || null,
             status: status || UserStatus.pendingapproval,

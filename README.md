@@ -259,7 +259,7 @@ docker-compose -f docker-compose-dev.yml up -d --build
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE). You are free to use it for personal and commercial projects.
+This project is licensed under the [MIT License](LICENSE). You can also view the in-app [License Page](/license). Free to use for personal and commercial projects.
 
 ---
 
