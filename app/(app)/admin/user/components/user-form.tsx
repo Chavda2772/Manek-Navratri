@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentList } from "@/components/user/document-list";
 import { DocumentUpload } from "@/components/user/document-upload";
-import { userStatusList } from "@/lib/constants/common";
+import { emailVerifiedOptions, userStatusList } from "@/lib/constants/common";
 import { UserStatus } from "@/lib/generated/prisma/enums";
 import { cn } from "@/lib/utils";
 import { useCreateUser, useUpdateUser } from "@/tanstacks/user";
@@ -40,6 +40,7 @@ import * as z from "zod";
 const userSchema = z.object({
     name: z.string().min(2, "Name is required"),
     email: z.string().email("Invalid email"),
+    emailVerified: z.boolean(),
     contactNo: z.string().optional().or(z.literal("")),
     username: z.string().min(3, "Username must be at least 3 characters"),
     status: z.string(),
@@ -74,6 +75,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
         defaultValues: initialData ? {
             name: initialData.name || "",
             email: initialData.email || "",
+            emailVerified: initialData.emailVerified ?? false,
             contactNo: initialData.contactNo || "",
             username: initialData.username || getUniqueUserName(initialData.name),
             status: initialData.status || UserStatus.pendingapproval,
@@ -83,6 +85,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
             role: initialRoleString
         } : {
             status: UserStatus.pendingapproval,
+            emailVerified: false,
             role: "user",
             username: getUniqueUserName()
         }
@@ -209,7 +212,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                         Profile & Category
                     </h3>
                     <div className="space-y-10">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             <div className="space-y-3">
                                 <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Initial Status</Label>
 
@@ -218,7 +221,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                                     defaultValue={watch("status")}
                                     onValueChange={(val: any) => setValue("status", val || "pendingapproval")}
                                 >
-                                    <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                                    <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-2xl shadow-2xl">
@@ -232,6 +235,27 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                             </div>
 
                             <div className="space-y-3">
+                                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Account Verified</Label>
+
+                                <Select
+                                    items={emailVerifiedOptions}
+                                    defaultValue={watch("emailVerified") ? "true" : "false"}
+                                    onValueChange={(val: any) => setValue("emailVerified", val === "true")}
+                                >
+                                    <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-2xl shadow-2xl">
+                                        {emailVerifiedOptions.map((item) => (
+                                            <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                                                {item.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-3 sm:col-span-2 lg:col-span-1">
                                 <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Occupation</Label>
                                 <div className="relative group">
                                     <Input {...register("occupation")} placeholder="Real Estate Developer" className="pl-12 rounded-2xl h-14 bg-muted/30 border-none transition-all focus-visible:ring-primary/20" />
@@ -241,7 +265,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Assigned Categories (Roles)</Label>
+                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Assigned Roles</Label>
                             <div className="flex flex-wrap gap-4 p-6 bg-muted/20 rounded-[2rem] border border-border/50">
                                 {USER_ROLE_OPTIONS.map((roleConfig) => {
                                     const role = roleConfig.id as Role;
