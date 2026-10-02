@@ -242,7 +242,7 @@ export default function UserForm({ initialData, backUrl }: UserFormProps) {
                                     defaultValue={watch("emailVerified") ? "true" : "false"}
                                     onValueChange={(val: any) => setValue("emailVerified", val === "true")}
                                 >
-                                    <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                                    <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-2xl shadow-2xl">
