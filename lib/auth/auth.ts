@@ -51,10 +51,13 @@ export const auth = betterAuth({
       enabled: true,
       sendDeleteAccountVerification: async ({ user, url, token }: any) => {
         try {
-          const confirmUrl = token
-            ? `${envServer.BETTER_AUTH_URL}/confirm-delete-account?token=${token}`
-            : url;
+          const confirmUrl = token ? `${envServer.BETTER_AUTH_URL}/confirm-delete-account?token=${token}` : url;
           const emailHtml = getDeleteAccountEmailHtml(user.email, confirmUrl);
+
+          // Dev-only helper
+          if (envServer.NODE_ENV === "development") {
+            console.log("Delete confirmation URL (dev only):", confirmUrl);
+          }
 
           const { data, error } = await sendMail({
             sendTo: user.email,
@@ -69,11 +72,6 @@ export const auth = betterAuth({
 
           console.log("Delete account confirmation email sent to:", user.email);
           console.log("Email ID:", data?.id);
-
-          // Dev-only helper
-          if (envServer.NODE_ENV === "development") {
-            console.log("Delete confirmation URL (dev only):", confirmUrl);
-          }
         } catch (error) {
           console.error("Error in sendDeleteAccountVerification:", error);
           throw error;
@@ -96,8 +94,12 @@ export const auth = betterAuth({
     // Send password reset mail
     sendResetPassword: async ({ user, url }) => {
       try {
-        const emailHtml = getResetPasswordEmailHtml(user.email, url)
+        // In development, also log the URL for easy testing
+        if (envServer.NODE_ENV === "development") {
+          console.log("Reset URL (dev only):", url)
+        }
 
+        const emailHtml = getResetPasswordEmailHtml(user.email, url)
         const { data, error } = await sendMail({
           sendTo: user.email,
           subject: "Reset Your Password",
@@ -110,12 +112,6 @@ export const auth = betterAuth({
         }
         console.log("Reset password email sent successfully to:", user.email)
         console.log("Email data:", data)
-
-        // In development, also log the URL for easy testing
-        if (envServer.NODE_ENV === "development") {
-          console.log("Reset URL (dev only):", url)
-        }
-
       } catch (error) {
         console.error("Error in sendResetPassword:", error)
         throw error
@@ -123,8 +119,30 @@ export const auth = betterAuth({
     },
 
     // Send password reset successfully mail
-    onPasswordReset: async ({ user }) => {
+    onPasswordReset: async ({ user }, request) => {
       try {
+        const revokeHeader = request?.headers?.get("x-revoke-all-sessions") || request?.headers?.get("x-revoke-other-sessions");
+        let shouldRevoke = revokeHeader === "true";
+        if (!shouldRevoke && request?.url) {
+          try {
+            const url = new URL(request.url, envServer.BETTER_AUTH_URL);
+            if (url.searchParams.get("revokeSessions") === "true") {
+              shouldRevoke = true;
+            }
+          } catch {
+            // ignore URL parse errors
+          }
+        }
+
+        if (shouldRevoke) {
+          await prisma.session.deleteMany({
+            where: {
+              userId: user.id,
+            },
+          });
+          console.log(`Successfully revoked all sessions for user ${user.email} on password reset.`);
+        }
+
         const appUrl = envServer.BETTER_AUTH_URL;
         const emailHtml = getPasswordResetSuccessEmailHtml(user.email, appUrl);
 
