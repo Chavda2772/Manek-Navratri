@@ -1,17 +1,13 @@
 "use client";
 
-import { FooterButtons } from "@/components/footer-buttons";
 import AppTabs from "@/components/tab/app-tabs";
-import { Button } from "@/components/ui/button";
 import { hasRole } from "@/lib/auth/permissions";
 import { tran } from "@/lib/languages/i18n";
 import { useAdminUsers } from "@/tanstacks/admin";
-import { Database, Plus, Settings as SettingsIcon, Users } from "lucide-react";
+import { Database, Settings as SettingsIcon, Users } from "lucide-react";
 import dynamic from "next/dynamic";
-import { redirect } from "next/navigation";
 import { AdminSkeleton } from "./admin-skeleton";
-import { AdminStats } from "./admin-stats";
-import { UserList } from "./user-list";
+import { UserTab } from "./user-tab";
 
 const AppSettingsTab = dynamic(
     () => import("./app-settings-tab").then((mod) => mod.AppSettingsTab),
@@ -50,27 +46,12 @@ export function AdminContent() {
                         id: "user-management",
                         label: tran("admin.user_mng.title"),
                         icon: <Users size={20} />,
-                        content: (
-                            <>
-                                <AdminStats
-                                    totalUsers={totalUsers}
-                                    activeUsers={activeUsers}
-                                    bannedUsers={bannedUsers}
-                                    adminUsers={adminUsers}
-                                />
-
-                                <UserList />
-
-                                <FooterButtons bottomSpace={true}>
-                                    <Button onClick={() => { redirect('/admin/user/add' as any) }} className="h-14 w-14 md:w-auto md:px-12 rounded-full md:gap-3 font-semibold uppercase bg-primary text-white shadow-lg shadow-primary/30 transition-all hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 p-0 md:py-2">
-                                        <Plus className="size-5 md:size-6" />
-                                        <span className="hidden md:block text-center font-black tracking-[0.2em] text-sm">
-                                            Add User
-                                        </span>
-                                    </Button>
-                                </FooterButtons>
-                            </>
-                        )
+                        content: <UserTab
+                            totalUsers={totalUsers}
+                            adminUsers={adminUsers}
+                            activeUsers={activeUsers}
+                            bannedUsers={bannedUsers}
+                        />
                     },
                     {
                         id: "application-settings",

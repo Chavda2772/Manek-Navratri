@@ -26,9 +26,10 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
     useIsomorphicLayoutEffect(() => {
         const handleHashChange = () => {
             if (typeof window !== "undefined") {
-                const hash = window.location.hash.replace("#", "");
-                if (hash && tabs.some((tab) => tab.id === hash)) {
-                    setActiveTab(hash);
+                const rawHash = window.location.hash.replace("#", "");
+                const tabId = rawHash.split("?")[0];
+                if (tabId && tabs.some((tab) => tab.id === tabId)) {
+                    setActiveTab(tabId);
                 }
             }
         };
@@ -77,7 +78,7 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className={cn("w-full", className)}>
             {/* Nav Desktop Container */}
-            <div className="mb-4 hidden lg:block">
+            <div className="mb-8 hidden lg:block">
                 <TabsList
                     ref={tabsListRef}
                     onMouseDown={handleMouseDown}
@@ -85,7 +86,7 @@ export default function AppTabs({ tabs, defaultTab, className = "w-full" }: AppT
                     onMouseUp={handleMouseUp}
                     onMouseMove={handleMouseMove}
                     className={cn(
-                        "relative w-full flex items-center justify-start h-auto p-1.5 bg-slate-100/30 dark:bg-slate-900/30 backdrop-blur-xl rounded-4xl border border-slate-200/50 dark:border-slate-800/50 overflow-x-auto scrollbar-hide no-scrollbar flex-nowrap shrink-0 transition-all select-none",
+                        "relative w-full flex items-center justify-start h-auto p-1.5 bg-slate-100/30 dark:bg-slate-900/30 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-x-auto scrollbar-hide no-scrollbar flex-nowrap shrink-0 transition-all select-none",
                         isDragging ? "cursor-grabbing" : "cursor-grab"
                     )}
                 >
