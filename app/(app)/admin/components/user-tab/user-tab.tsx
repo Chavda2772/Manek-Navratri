@@ -1,18 +1,39 @@
+"use client";
+
 import { FooterButtons } from "@/components/footer-buttons";
-import { AdminStats } from "./admin-stats";
-import { UserList } from "./user-list";
 import { Button } from "@/components/ui/button";
+import { hasRole } from "@/lib/auth/permissions";
+import { useAdminUsers } from "@/tanstacks/admin";
 import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
+import { AdminSkeleton } from "../admin-skeleton";
+import { AdminStats } from "./admin-stats";
+import { UserList } from "./user-list";
 
 interface UserTabProp {
-    totalUsers: number
-    activeUsers: number
-    bannedUsers: number
-    adminUsers: number
+    totalUsers?: number;
+    activeUsers?: number;
+    bannedUsers?: number;
+    adminUsers?: number;
 }
 
-export function UserTab({ totalUsers, activeUsers, bannedUsers, adminUsers }: UserTabProp) {
+export function UserTab({
+    totalUsers: propTotal,
+    activeUsers: propActive,
+    bannedUsers: propBanned,
+    adminUsers: propAdmin,
+}: UserTabProp = {}) {
+    const { data: users, isLoading } = useAdminUsers();
+
+    if (isLoading && propTotal === undefined) {
+        return <AdminSkeleton />;
+    }
+
+    const totalUsers = propTotal ?? (users ? users.length : 0);
+    const adminUsers = propAdmin ?? (users ? users.filter((u: any) => hasRole(u.role, "admin")).length : 0);
+    const bannedUsers = propBanned ?? (users ? users.filter((u: any) => u.banned).length : 0);
+    const activeUsers = propActive ?? (totalUsers - bannedUsers);
+
     return (
         <>
             <AdminStats
