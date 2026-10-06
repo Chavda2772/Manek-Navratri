@@ -1,8 +1,10 @@
 import { getPublicRegistrationEventAction } from "@/actions/registration.actions";
+import { getRegistrationAuth } from "@/lib/registration/session";
 import { EventRegHeader } from "../components/event-reg-header";
 import { RegistrationFormClient } from "../components/registration-form-client";
 import { ShieldX } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,22 @@ interface FormPageProps {
 
 export default async function PublicRegistrationFormPage({ params }: FormPageProps) {
   const { registrationId } = await params;
+
+  // Validate session from cookie
+  const auth = await getRegistrationAuth(registrationId);
+
+  // If already registered, take straight to their pass
+  if (auth.isAuthenticated && auth.hasActiveRegistration && auth.registrationId) {
+    redirect(
+      `/registration/${registrationId}/success?id=${auth.registrationId}&alreadyRegistered=true`
+    );
+  }
+
+  // If not verified with a pending session, redirect to step 1
+  if (!auth.isAuthenticated || !auth.hasPendingSession || !auth.mobileNumber || !auth.sessionToken) {
+    redirect(`/registration/${registrationId}`);
+  }
+
   const res = await getPublicRegistrationEventAction(registrationId);
 
   if (!res.success || !res.event) {
@@ -46,7 +64,12 @@ export default async function PublicRegistrationFormPage({ params }: FormPagePro
     <main className="min-h-screen bg-background text-foreground py-8 px-4 sm:px-6 flex flex-col items-center justify-start">
       <div className="w-full max-w-2xl space-y-6">
         <EventRegHeader event={event} currentStep={3} />
-        <RegistrationFormClient registrationId={registrationId} event={event} />
+        <RegistrationFormClient
+          registrationId={registrationId}
+          event={event}
+          verifiedPhone={auth.mobileNumber}
+          verifiedToken={auth.sessionToken}
+        />
       </div>
     </main>
   );

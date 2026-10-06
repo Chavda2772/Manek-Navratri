@@ -613,6 +613,11 @@ export async function getPassByTokenAction(token: string) {
       where: { token },
       include: {
         event: true,
+        registration: {
+          include: {
+            familyMembers: true,
+          },
+        },
         checkIns: {
           where: { status: "APPROVED" },
           orderBy: { scannedAt: "desc" },

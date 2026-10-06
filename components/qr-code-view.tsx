@@ -23,7 +23,7 @@ export function QRCodeView({
   data,
   size = 280,
   showDownload = false,
-  fileName = "eventkey-pass",
+  fileName = "manek-navratri-pass",
   className = "",
   bgColor = "#FFFFFF",
   fgColor = "#000000",

@@ -421,18 +421,6 @@ export default async function EventDetailPage({ params }: EventPageProps) {
             </div>
           </div>
         )}
-
-        {/* ========================================================
-            5. REGISTERED ATTENDEES & FAMILY GROUPS
-            ======================================================== */}
-        <EventRegisteredAttendees
-          eventId={event.id}
-          event={event}
-          initialRegistrations={registrations}
-          stats={regRes.success && regRes.stats ? regRes.stats : undefined}
-          showViewAllLink={true}
-          title="Registered Attendees"
-        />
       </div>
 
       <MobileNav />

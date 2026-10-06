@@ -13,7 +13,7 @@ export interface QRCodeOptions {
  */
 export async function downloadQRCodeFromSvg(
   svgElement: SVGElement,
-  fileName: string = "eventkey-pass",
+  fileName: string = "manek-navratri-pass",
   exportSize: number = 500
 ): Promise<void> {
   if (typeof window === "undefined" || !svgElement) return;

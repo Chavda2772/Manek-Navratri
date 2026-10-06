@@ -12,6 +12,17 @@ import {
   MAX_FAMILY_MEMBERS,
   cleanPhoneNumber,
 } from "@/lib/constants/registration";
+import {
+  createRegistrationAuthCookie,
+  createRegistrationPendingSession,
+  clearRegistrationSession,
+  getRegistrationAuth,
+  createRegistrationSession,
+  getRegistrationSession,
+} from "@/lib/registration/session";
+
+const MAX_OTP_ATTEMPTS = 5;
+const LOCKOUT_MINUTES = 15;
 
 async function isUserModerator() {
   const session = await getUserSession();
@@ -234,14 +245,6 @@ export async function sendRegistrationOtpAction(input: {
       return { success: false, error: "Event not found." };
     }
 
-    if (!event.registrationEnabled) {
-      return { success: false, error: "Public registration is currently closed for this event." };
-    }
-
-    if (event.status !== "ACTIVE") {
-      return { success: false, error: `Event is currently ${event.status.toLowerCase()}. Registration is closed.` };
-    }
-
     // Check if this mobile number has already registered for this event
     const existingRegistration = await prisma.eventRegistration.findFirst({
       where: {
@@ -249,35 +252,83 @@ export async function sendRegistrationOtpAction(input: {
         mobileNumber: cleanedMobile,
         status: "CONFIRMED",
       },
-      include: {
-        familyMembers: {
-          orderBy: { createdAt: "asc" },
-        },
-        passes: {
-          orderBy: { createdAt: "asc" },
-        },
+    });
+
+    // If new user, verify registration is enabled and event is active
+    if (!existingRegistration) {
+      if (!event.registrationEnabled) {
+        return { success: false, error: "Public registration is currently closed for this event." };
+      }
+
+      if (event.status !== "ACTIVE") {
+        return { success: false, error: `Event is currently ${event.status.toLowerCase()}. Registration is closed.` };
+      }
+
+      // Check capacity for new registration
+      if (event.capacity && event.capacity > 0) {
+        const countAgg = await prisma.eventRegistration.aggregate({
+          where: { eventId: event.id, status: "CONFIRMED" },
+          _sum: { totalMembers: true },
+        });
+        const currentTotal = countAgg._sum.totalMembers || 0;
+        if (currentTotal >= event.capacity) {
+          return { success: false, error: "Event capacity has been reached. No new registrations are allowed." };
+        }
+      }
+    }
+
+    const regKey = event.registrationId || registrationId;
+    const identifier = `otp:${regKey}:${cleanedMobile}`;
+    const attemptsIdentifier = `otp_attempts:${regKey}:${cleanedMobile}`;
+
+    // Check if mobile number is temporarily locked out due to too many failed attempts
+    const attemptsRecord = await prisma.verification.findFirst({
+      where: {
+        identifier: attemptsIdentifier,
+        expiresAt: { gt: new Date() },
       },
     });
 
-    if (existingRegistration) {
+    const currentAttempts = attemptsRecord ? parseInt(attemptsRecord.value, 10) || 0 : 0;
+    if (currentAttempts >= MAX_OTP_ATTEMPTS) {
+      const lockoutMinutes = attemptsRecord
+        ? Math.max(1, Math.ceil((attemptsRecord.expiresAt.getTime() - Date.now()) / (60 * 1000)))
+        : LOCKOUT_MINUTES;
       return {
-        success: true,
-        alreadyRegistered: true,
-        registrationId: existingRegistration.id,
-        primaryName: existingRegistration.primaryName,
-        totalMembers: existingRegistration.totalMembers,
-        message: "This mobile number is already registered for this event.",
-        mobileNumber: cleanedMobile,
+        success: false,
+        isLocked: true,
+        lockoutMinutes,
+        error: `This mobile number is temporarily locked due to too many failed attempts. Please try again in ${lockoutMinutes} minute${lockoutMinutes > 1 ? "s" : ""}.`,
       };
+    }
+
+    // Rate limit resend cooldown: 30 seconds between requests
+    const existingOtp = await prisma.verification.findFirst({
+      where: {
+        identifier,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (existingOtp) {
+      const timeSinceCreation = Date.now() - existingOtp.createdAt.getTime();
+      if (timeSinceCreation < 30 * 1000) {
+        const waitSec = Math.ceil((30 * 1000 - timeSinceCreation) / 1000);
+        return {
+          success: false,
+          error: `Please wait ${waitSec} second${waitSec > 1 ? "s" : ""} before requesting a new code.`,
+        };
+      }
     }
 
     // Generate random 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const identifier = `otp:${event.registrationId || registrationId}:${cleanedMobile}`;
 
-    // Clean up any existing OTP for this number
+    // Clean up any existing OTP and reset attempts counter for the new OTP
     await prisma.verification.deleteMany({
-      where: { identifier },
+      where: {
+        OR: [{ identifier }, { identifier: attemptsIdentifier }],
+      },
     });
 
     // Store in Verification table with 10 minutes expiry
@@ -401,7 +452,108 @@ export async function verifyRegistrationOtpAction(input: {
       return { success: false, error: "Event not found." };
     }
 
-    // If mobile number was already registered, return its registrationId immediately
+    const regKey = event.registrationId || registrationId;
+    const identifier = `otp:${regKey}:${cleanedMobile}`;
+    const attemptsIdentifier = `otp_attempts:${regKey}:${cleanedMobile}`;
+
+    // 1. Check if user is currently locked out due to too many failed attempts
+    const attemptsRecord = await prisma.verification.findFirst({
+      where: {
+        identifier: attemptsIdentifier,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    const currentAttempts = attemptsRecord ? parseInt(attemptsRecord.value, 10) || 0 : 0;
+
+    if (currentAttempts >= MAX_OTP_ATTEMPTS) {
+      const lockoutMinutes = attemptsRecord
+        ? Math.max(1, Math.ceil((attemptsRecord.expiresAt.getTime() - Date.now()) / (60 * 1000)))
+        : LOCKOUT_MINUTES;
+
+      // Ensure any active OTP is invalidated
+      await prisma.verification.deleteMany({
+        where: { identifier },
+      });
+
+      return {
+        success: false,
+        isLocked: true,
+        remainingAttempts: 0,
+        lockoutMinutes,
+        error: `Verification locked due to too many failed attempts. For your security, please wait ${lockoutMinutes} minute${lockoutMinutes > 1 ? "s" : ""} before trying again.`,
+      };
+    }
+
+    // 2. Check if active OTP exists
+    const record = await prisma.verification.findFirst({
+      where: {
+        identifier,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!record) {
+      return {
+        success: false,
+        hasActiveOtp: false,
+        error: "OTP code expired or not found. Please click 'Resend Code' to request a new code.",
+      };
+    }
+
+    // 3. Verify OTP code match
+    if (record.value !== cleanOtp) {
+      const newAttempts = currentAttempts + 1;
+      const remaining = Math.max(0, MAX_OTP_ATTEMPTS - newAttempts);
+      const isNowLocked = newAttempts >= MAX_OTP_ATTEMPTS;
+
+      // Update failed attempts in database with 15 minutes lockout duration
+      await prisma.verification.deleteMany({
+        where: { identifier: attemptsIdentifier },
+      });
+
+      await prisma.verification.create({
+        data: {
+          id: `att_${crypto.randomBytes(12).toString("hex")}`,
+          identifier: attemptsIdentifier,
+          value: newAttempts.toString(),
+          expiresAt: new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000),
+        },
+      });
+
+      if (isNowLocked) {
+        // Destroy the OTP immediately upon hitting max attempts limit
+        await prisma.verification.deleteMany({
+          where: { identifier },
+        });
+
+        return {
+          success: false,
+          isLocked: true,
+          remainingAttempts: 0,
+          lockoutMinutes: LOCKOUT_MINUTES,
+          error: `Maximum attempts reached (${MAX_OTP_ATTEMPTS}/${MAX_OTP_ATTEMPTS}). This verification code has been deactivated for security. Please wait ${LOCKOUT_MINUTES} minutes or request a new code.`,
+        };
+      }
+
+      return {
+        success: false,
+        isLocked: false,
+        remainingAttempts: remaining,
+        attemptsCount: newAttempts,
+        maxAttempts: MAX_OTP_ATTEMPTS,
+        error: `Invalid verification code. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`,
+      };
+    }
+
+    // 4. OTP is valid! Clean up both OTP and attempts records
+    await prisma.verification.deleteMany({
+      where: {
+        OR: [{ identifier }, { identifier: attemptsIdentifier }],
+      },
+    });
+
+    // Check if this verified mobile number was already registered for this event
     const existingRegistration = await prisma.eventRegistration.findFirst({
       where: {
         eventId: event.id,
@@ -411,39 +563,28 @@ export async function verifyRegistrationOtpAction(input: {
     });
 
     if (existingRegistration) {
+      // User has successfully verified OTP for their registered number!
+      // Generate persistent authentication cookie so they can view their pass & details
+      await createRegistrationAuthCookie(registrationId, cleanedMobile, existingRegistration.id);
+
       return {
         success: true,
         alreadyRegistered: true,
         registrationId: existingRegistration.id,
-        sessionToken: "",
         mobileNumber: cleanedMobile,
       };
     }
 
-    const regKey = event.registrationId || registrationId;
-    const identifier = `otp:${regKey}:${cleanedMobile}`;
-
-    const record = await prisma.verification.findFirst({
-      where: {
-        identifier,
-        expiresAt: { gt: new Date() },
-      },
-    });
-
-    if (!record) {
-      return { success: false, error: "OTP expired or not found. Please request a new code." };
+    // If new user, verify event status
+    if (!event.registrationEnabled) {
+      return { success: false, error: "Public registration is currently closed for this event." };
     }
 
-    if (record.value !== cleanOtp) {
-      return { success: false, error: "Invalid OTP code. Please check and try again." };
+    if (event.status !== "ACTIVE") {
+      return { success: false, error: `Event is currently ${event.status.toLowerCase()}. Registration is closed.` };
     }
 
-    // OTP is valid! Delete the OTP
-    await prisma.verification.deleteMany({
-      where: { identifier },
-    });
-
-    // Create session token valid for 30 minutes
+    // Create session token valid for 60 minutes for new registration form filling
     const sessionToken = crypto.randomBytes(24).toString("hex");
     const verifiedIdentifier = `verified:${regKey}:${cleanedMobile}`;
 
@@ -456,18 +597,128 @@ export async function verifyRegistrationOtpAction(input: {
         id: `vtoken_${crypto.randomBytes(12).toString("hex")}`,
         identifier: verifiedIdentifier,
         value: sessionToken,
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 60 minutes
       },
     });
 
+    // Store pending session in secure HttpOnly cookie
+    await createRegistrationPendingSession(registrationId, cleanedMobile, sessionToken);
+
     return {
       success: true,
+      alreadyRegistered: false,
       sessionToken,
       mobileNumber: cleanedMobile,
     };
   } catch (error: any) {
     console.error("verifyRegistrationOtpAction error:", error);
     return { success: false, error: "OTP verification failed. Please try again." };
+  }
+}
+
+/**
+ * Public action: Returns current OTP status and attempts remaining for a mobile number.
+ */
+export async function getRegistrationOtpStatusAction(input: {
+  registrationId: string;
+  mobileNumber: string;
+}) {
+  try {
+    const { registrationId, mobileNumber } = input;
+    const cleanedMobile = cleanPhoneNumber(mobileNumber);
+
+    if (!cleanedMobile || cleanedMobile.length < 10) {
+      return { success: false, error: "Invalid mobile number" };
+    }
+
+    const event = await prisma.event.findFirst({
+      where: {
+        OR: [{ registrationId }, { id: registrationId }],
+      },
+    });
+
+    if (!event) {
+      return { success: false, error: "Event not found" };
+    }
+
+    const regKey = event.registrationId || registrationId;
+    const identifier = `otp:${regKey}:${cleanedMobile}`;
+    const attemptsIdentifier = `otp_attempts:${regKey}:${cleanedMobile}`;
+
+    const [otpRecord, attemptsRecord] = await Promise.all([
+      prisma.verification.findFirst({
+        where: {
+          identifier,
+          expiresAt: { gt: new Date() },
+        },
+      }),
+      prisma.verification.findFirst({
+        where: {
+          identifier: attemptsIdentifier,
+          expiresAt: { gt: new Date() },
+        },
+      }),
+    ]);
+
+    const attemptsCount = attemptsRecord ? parseInt(attemptsRecord.value, 10) || 0 : 0;
+    const isLocked = attemptsCount >= MAX_OTP_ATTEMPTS;
+    const remainingAttempts = Math.max(0, MAX_OTP_ATTEMPTS - attemptsCount);
+
+    let lockoutMinutes = 0;
+    if (isLocked && attemptsRecord) {
+      lockoutMinutes = Math.max(
+        1,
+        Math.ceil((attemptsRecord.expiresAt.getTime() - Date.now()) / (60 * 1000))
+      );
+    }
+
+    let secondsUntilResend = 0;
+    if (otpRecord) {
+      const timeElapsed = Date.now() - otpRecord.createdAt.getTime();
+      if (timeElapsed < 30 * 1000) {
+        secondsUntilResend = Math.ceil((30 * 1000 - timeElapsed) / 1000);
+      }
+    }
+
+    return {
+      success: true,
+      hasActiveOtp: !!otpRecord,
+      isLocked,
+      lockoutMinutes,
+      remainingAttempts,
+      maxAttempts: MAX_OTP_ATTEMPTS,
+      attemptsCount,
+      secondsUntilResend,
+    };
+  } catch (error: any) {
+    console.error("getRegistrationOtpStatusAction error:", error);
+    return { success: false, error: "Failed to get OTP status" };
+  }
+}
+
+/**
+ * Public action: Clears registration session cookie and resets verification state.
+ */
+export async function clearRegistrationSessionAction(registrationId: string) {
+  try {
+    await clearRegistrationSession(registrationId);
+    return { success: true };
+  } catch (error: any) {
+    console.error("clearRegistrationSessionAction error:", error);
+    return { success: false, error: "Failed to clear registration session" };
+  }
+}
+
+/**
+ * Public action: Checks if the user has an active verified registration session.
+ */
+export async function checkRegistrationSessionAction(registrationId: string) {
+  try {
+    const session = await getRegistrationSession(registrationId);
+    return { success: true, session };
+  } catch (error: any) {
+    console.error("checkRegistrationSessionAction error:", error);
+    return { success: false, error: "Failed to check session" };
   }
 }
 
@@ -683,6 +934,9 @@ export async function submitEventRegistrationAction(input: SubmitRegistrationInp
     } catch {
       // Ignored outside Next.js request lifecycle
     }
+
+    // Generate persistent 30-day authentication cookie for this registered attendee
+    await createRegistrationAuthCookie(registrationId, cleanedMobile, result.registration.id);
 
     return {
       success: true,

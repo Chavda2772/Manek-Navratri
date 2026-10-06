@@ -62,59 +62,6 @@ export function EventRegHeader({ event, currentStep }: EventRegHeaderProps) {
           )}
         </div>
       </div>
-
-      {/* Step Progress Bar */}
-      <div className="bg-card/70 border border-border/80 rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
-        <div className="flex items-center justify-between relative">
-          {/* Connection line behind steps */}
-          <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-0.5 bg-muted z-0" />
-          <div
-            className="absolute left-6 top-1/2 -translate-y-1/2 h-0.5 bg-gradient-to-r from-pink-500 to-purple-600 transition-all duration-300 z-0"
-            style={{
-              width:
-                currentStep === 1
-                  ? "0%"
-                  : currentStep === 2
-                  ? "33%"
-                  : currentStep === 3
-                  ? "66%"
-                  : "calc(100% - 3rem)",
-            }}
-          />
-
-          {steps.map((s) => {
-            const isCompleted = s.num < currentStep;
-            const isCurrent = s.num === currentStep;
-
-            return (
-              <div key={s.num} className="relative z-10 flex flex-col items-center gap-1">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-xs ${
-                    isCompleted
-                      ? "bg-emerald-500 text-white"
-                      : isCurrent
-                      ? "bg-gradient-to-br from-pink-600 to-purple-600 text-white ring-4 ring-pink-500/20 scale-110"
-                      : "bg-muted text-muted-foreground border border-border"
-                  }`}
-                >
-                  {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : s.num}
-                </div>
-                <span
-                  className={`text-[11px] font-semibold whitespace-nowrap ${
-                    isCurrent
-                      ? "text-foreground font-bold"
-                      : isCompleted
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {s.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

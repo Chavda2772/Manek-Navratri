@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { submitEventRegistrationAction } from "@/actions/registration.actions";
+import {
+  submitEventRegistrationAction,
+  clearRegistrationSessionAction,
+} from "@/actions/registration.actions";
 import { FAMILY_RELATIONS, FamilyRelation, MAX_FAMILY_MEMBERS } from "@/lib/constants/registration";
 import {
   User,
@@ -16,6 +19,7 @@ import {
   ArrowRight,
   AlertCircle,
   Sparkles,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface FamilyMemberItem {
   id: string;
@@ -37,18 +42,28 @@ interface FamilyMemberItem {
 interface RegistrationFormClientProps {
   registrationId: string;
   event: any;
+  verifiedPhone?: string;
+  verifiedToken?: string;
 }
 
-export function RegistrationFormClient({ registrationId, event }: RegistrationFormClientProps) {
+export function RegistrationFormClient({
+  registrationId,
+  event,
+  verifiedPhone,
+  verifiedToken,
+}: RegistrationFormClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const phone = searchParams.get("phone") || "";
-  const token = searchParams.get("token") || "";
+
+  // Use verified props from session cookie or query parameters
+  const phone = verifiedPhone || searchParams.get("phone") || "";
+  const token = verifiedToken || searchParams.get("token") || "";
 
   const [primaryName, setPrimaryName] = useState("");
   const [place, setPlace] = useState("");
   const [familyMembers, setFamilyMembers] = useState<FamilyMemberItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [changingNumber, setChangingNumber] = useState(false);
   const [errors, setErrors] = useState<{
     primaryName?: string;
     place?: string;
@@ -56,11 +71,23 @@ export function RegistrationFormClient({ registrationId, event }: RegistrationFo
   }>({});
 
   useEffect(() => {
-    if (!phone || !token) {
+    if (!phone) {
       toast.error("Please verify your phone number first");
       router.replace(`/registration/${registrationId}`);
     }
-  }, [phone, token, registrationId, router]);
+  }, [phone, registrationId, router]);
+
+  const handleChangePhoneNumber = async () => {
+    setChangingNumber(true);
+    try {
+      await clearRegistrationSessionAction(registrationId);
+      router.push(`/registration/${registrationId}`);
+    } catch {
+      router.push(`/registration/${registrationId}`);
+    } finally {
+      setChangingNumber(false);
+    }
+  };
 
   const addFamilyMember = () => {
     if (familyMembers.length >= MAX_FAMILY_MEMBERS) {
@@ -168,22 +195,49 @@ export function RegistrationFormClient({ registrationId, event }: RegistrationFo
   const totalPeople = 1 + familyMembers.length;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="space-y-6"
+    >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* PRIMARY ATTENDEE CARD */}
         <div className="rounded-3xl bg-card border border-border/80 p-5 sm:p-7 shadow-xl backdrop-blur-md space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border/60">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center font-bold">
-                <User className="w-4 h-4" />
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center font-bold">
+                <User className="w-5 h-5" />
               </div>
-              <h2 className="text-lg font-black text-foreground">
-                Primary Attendee Details
-              </h2>
+              <div>
+                <h2 className="text-lg font-black text-foreground">
+                  Primary Attendee Details
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Pass will be registered in this person's name
+                </p>
+              </div>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold font-mono">
-              <ShieldCheck className="w-3.5 h-3.5" /> +91 {phone} Verified
-            </span>
+
+            {/* Verified badge with Change Number action */}
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold font-mono">
+                <ShieldCheck className="w-3.5 h-3.5" /> +91 {phone} Verified
+              </span>
+              <button
+                type="button"
+                onClick={handleChangePhoneNumber}
+                disabled={changingNumber || loading}
+                className="text-[11px] text-muted-foreground hover:text-pink-600 dark:hover:text-pink-400 font-bold underline cursor-pointer"
+                title="Change phone number"
+              >
+                {changingNumber ? (
+                  <Loader2 className="w-3 h-3 animate-spin inline" />
+                ) : (
+                  "Change"
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -201,7 +255,7 @@ export function RegistrationFormClient({ registrationId, event }: RegistrationFo
                     setPrimaryName(e.target.value);
                     if (errors.primaryName) setErrors({ ...errors, primaryName: undefined });
                   }}
-                  className="h-12 text-sm font-semibold rounded-xl border-2 focus-visible:ring-pink-500/20 focus-visible:border-pink-500"
+                  className="h-12 text-sm font-semibold rounded-2xl border-2 focus-visible:ring-pink-500/20 focus-visible:border-pink-500"
                   autoFocus
                 />
               </div>
@@ -229,7 +283,7 @@ export function RegistrationFormClient({ registrationId, event }: RegistrationFo
                     setPlace(e.target.value);
                     if (errors.place) setErrors({ ...errors, place: undefined });
                   }}
-                  className="pl-10 h-12 text-sm font-semibold rounded-xl border-2 focus-visible:ring-pink-500/20 focus-visible:border-pink-500"
+                  className="pl-10 h-12 text-sm font-semibold rounded-2xl border-2 focus-visible:ring-pink-500/20 focus-visible:border-pink-500"
                 />
               </div>
               {errors.place && (
@@ -243,17 +297,17 @@ export function RegistrationFormClient({ registrationId, event }: RegistrationFo
 
         {/* FAMILY MEMBERS CARD */}
         <div className="rounded-3xl bg-card border border-border/80 p-5 sm:p-7 shadow-xl backdrop-blur-md space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border/60">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
-                <Users className="w-4 h-4" />
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+                <Users className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="text-lg font-black text-foreground">
                   Family Members
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Add up to 4 additional family members
+                  Add up to {MAX_FAMILY_MEMBERS} additional family members
                 </p>
               </div>
             </div>
@@ -271,155 +325,108 @@ export function RegistrationFormClient({ registrationId, event }: RegistrationFo
             </Button>
           </div>
 
-          {familyMembers.length === 0 ? (
-            <div className="p-6 rounded-2xl bg-muted/40 border border-dashed border-border text-center space-y-2">
-              <p className="text-sm font-semibold text-muted-foreground">
-                No family members added yet.
-              </p>
-              <p className="text-xs text-muted-foreground/80">
-                Click "+ Add Member" above if you would like to include family members in this registration.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3.5">
-              {familyMembers.map((member, idx) => (
-                <div
-                  key={member.id}
-                  className="p-4 rounded-2xl bg-background/80 border border-border/80 space-y-3 shadow-xs hover:border-pink-500/30 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase text-pink-600 dark:text-pink-400 tracking-wider">
-                      Family Member #{idx + 1}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeFamilyMember(member.id)}
-                      className="text-xs text-muted-foreground hover:text-rose-500 p-1 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
-                      title="Remove member"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                    <div className="sm:col-span-7 space-y-1">
-                      <Input
-                        type="text"
-                        placeholder="Member Full Name"
-                        value={member.name}
-                        onChange={(e) => updateFamilyMember(member.id, "name", e.target.value)}
-                        className="h-11 text-sm font-semibold rounded-xl"
-                      />
-                      {errors.family?.[member.id] && (
-                        <p className="text-[11px] font-semibold text-rose-500">
-                          {errors.family[member.id]}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="sm:col-span-5 space-y-1">
-                      <Select
-                        value={member.relation}
-                        onValueChange={(val) => updateFamilyMember(member.id, "relation", val as FamilyRelation)}
-                      >
-                        <SelectTrigger className="h-11 rounded-xl text-sm font-semibold border bg-card">
-                          <SelectValue placeholder="Relation" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl shadow-xl max-h-56">
-                          {FAMILY_RELATIONS.map((rel) => (
-                            <SelectItem key={rel} value={rel} className="text-xs font-semibold rounded-lg">
-                              {rel}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* LIVE ATTENDEES SUMMARY CARD (Requested in prompt) */}
-        <div className="rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-950 text-white p-5 sm:p-7 shadow-2xl border border-pink-500/30 space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-pink-400" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-300">
-                Attendees Summary
-              </h3>
-            </div>
-            <span className="text-xs font-black px-2.5 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
-              Live Preview
-            </span>
-          </div>
-
-          <div className="space-y-4 text-sm font-medium">
-            {/* Primary section */}
-            <div className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-pink-400">
-                Primary
-              </span>
-              <div className="flex items-center gap-2 text-zinc-100 font-bold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{primaryName.trim() || "(Enter primary name)"}</span>
-              </div>
-            </div>
-
-            {/* Family section */}
-            {familyMembers.length > 0 && (
-              <div className="space-y-2 pt-1 border-t border-zinc-800/80">
-                <span className="text-xs font-bold uppercase tracking-wider text-purple-400">
-                  Family
-                </span>
-                <div className="space-y-1.5 pl-0.5">
-                  {familyMembers.map((m, i) => (
-                    <div key={m.id || i} className="flex items-center justify-between text-zinc-200">
-                      <div className="flex items-center gap-2 font-medium">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>{m.name.trim() || `Family Member #${i + 1}`}</span>
-                      </div>
-                      <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 font-semibold border border-zinc-700">
-                        {m.relation}
+          <AnimatePresence>
+            {familyMembers.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="p-6 rounded-2xl bg-muted/40 border border-dashed border-border text-center space-y-2"
+              >
+                <p className="text-sm font-semibold text-muted-foreground">
+                  No family members added yet.
+                </p>
+                <p className="text-xs text-muted-foreground/80">
+                  Click "+ Add Member" above if you'd like to issue family passes.
+                </p>
+              </motion.div>
+            ) : (
+              <div className="space-y-3.5">
+                {familyMembers.map((member, idx) => (
+                  <motion.div
+                    key={member.id}
+                    initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, height: "auto", scale: 1 }}
+                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-4 rounded-2xl bg-background/80 border border-border/80 space-y-3 shadow-xs hover:border-pink-500/30 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase text-pink-600 dark:text-pink-400 tracking-wider">
+                        Family Member #{idx + 1}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => removeFamilyMember(member.id)}
+                        className="text-xs text-muted-foreground hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title="Remove member"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                  ))}
-                </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                      <div className="sm:col-span-7 space-y-1">
+                        <Input
+                          type="text"
+                          placeholder="Member Full Name"
+                          value={member.name}
+                          onChange={(e) => updateFamilyMember(member.id, "name", e.target.value)}
+                          className="h-12 text-sm font-semibold rounded-xl"
+                        />
+                        {errors.family?.[member.id] && (
+                          <p className="text-[11px] font-semibold text-rose-500">
+                            {errors.family[member.id]}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="sm:col-span-5 space-y-1">
+                        <Select
+                          value={member.relation}
+                          onValueChange={(val) => updateFamilyMember(member.id, "relation", val as FamilyRelation)}
+                        >
+                          <SelectTrigger className="h-12 rounded-xl text-sm font-semibold border bg-card">
+                            <SelectValue placeholder="Relation" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl shadow-xl max-h-56">
+                            {FAMILY_RELATIONS.map((rel) => (
+                              <SelectItem key={rel} value={rel} className="text-xs font-semibold rounded-lg">
+                                {rel}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             )}
-
-            {/* Total counter */}
-            <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
-              <span className="text-base font-black text-white">
-                Total: {totalPeople} {totalPeople === 1 ? "Person" : "People"}
-              </span>
-              <span className="text-xs text-zinc-400">
-                {place ? `Place: ${place}` : ""}
-              </span>
-            </div>
-          </div>
+          </AnimatePresence>
         </div>
 
         {/* SUBMIT BUTTON */}
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full h-14 rounded-2xl text-base font-black bg-gradient-to-r from-pink-600 via-pink-500 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-xl shadow-pink-600/30 cursor-pointer disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Confirming Registration...
-            </>
-          ) : (
-            <>
-              Confirm Registration • {totalPeople} {totalPeople === 1 ? "Person" : "People"}
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </>
-          )}
-        </Button>
+        <motion.div whileTap={{ scale: !loading ? 0.98 : 1 }}>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-14 rounded-2xl text-base font-black bg-gradient-to-r from-pink-600 via-pink-500 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-xl shadow-pink-600/30 cursor-pointer disabled:opacity-50 transition-all"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                Generating Event Passes...
+              </>
+            ) : (
+              <>
+                Confirm Registration • {totalPeople} {totalPeople === 1 ? "Pass" : "Passes"}
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </>
+            )}
+          </Button>
+        </motion.div>
       </form>
-    </div>
+    </motion.div>
   );
 }

@@ -1,18 +1,52 @@
-import { getPublicRegistrationEventAction } from "@/actions/registration.actions";
-import { EventRegHeader } from "../components/event-reg-header";
+import {
+  getPublicRegistrationEventAction,
+  getRegistrationOtpStatusAction,
+} from "@/actions/registration.actions";
+import { getRegistrationAuth } from "@/lib/registration/session";
 import { VerifyStepClient } from "../components/verify-step-client";
 import { ShieldX } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 interface VerifyPageProps {
   params: Promise<{ registrationId: string }>;
+  searchParams: Promise<{ phone?: string }>;
 }
 
-export default async function PublicRegistrationVerifyPage({ params }: VerifyPageProps) {
+export default async function PublicRegistrationVerifyPage({
+  params,
+  searchParams,
+}: VerifyPageProps) {
   const { registrationId } = await params;
-  const res = await getPublicRegistrationEventAction(registrationId);
+  const { phone } = await searchParams;
+
+  // If user already authenticated via cookie, jump directly to their pass or details form
+  const auth = await getRegistrationAuth(registrationId);
+
+  if (auth.isAuthenticated && auth.hasActiveRegistration && auth.registrationId) {
+    redirect(
+      `/registration/${registrationId}/success?id=${auth.registrationId}&alreadyRegistered=true`
+    );
+  }
+
+  if (auth.isAuthenticated && auth.hasPendingSession) {
+    redirect(`/registration/${registrationId}/form`);
+  }
+
+  // If no phone parameter provided, redirect back to enter mobile
+  if (!phone) {
+    redirect(`/registration/${registrationId}`);
+  }
+
+  const [res, otpStatusRes] = await Promise.all([
+    getPublicRegistrationEventAction(registrationId),
+    getRegistrationOtpStatusAction({
+      registrationId,
+      mobileNumber: phone,
+    }),
+  ]);
 
   if (!res.success || !res.event) {
     return (
@@ -41,12 +75,17 @@ export default async function PublicRegistrationVerifyPage({ params }: VerifyPag
   }
 
   const { event } = res;
+  const initialOtpStatus = otpStatusRes.success ? otpStatusRes : undefined;
 
   return (
     <main className="min-h-screen bg-background text-foreground py-8 px-4 sm:px-6 flex flex-col items-center justify-start">
       <div className="w-full max-w-xl space-y-6">
-        <EventRegHeader event={event} currentStep={2} />
-        <VerifyStepClient registrationId={registrationId} event={event} />
+        <VerifyStepClient
+          registrationId={registrationId}
+          event={event}
+          initialPhone={phone}
+          initialOtpStatus={initialOtpStatus}
+        />
       </div>
     </main>
   );
