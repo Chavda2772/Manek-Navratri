@@ -28,7 +28,8 @@ export const headerRoutesConfig: HeaderRouteRule[] = [
   {
     pattern: "/dashboard",
     title: "dashboard.title",
-    showBack: false
+    showBack: false,
+    showMobileNav: true,
   },
   // Admin root
   {
