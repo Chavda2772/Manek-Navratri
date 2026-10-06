@@ -232,42 +232,54 @@ enum EventStatus {
   COMPLETED
 }
 
-model Event {
-  id          String      @id @default(cuid())
-  title       String
-  description String?     @db.Text
-  location    String?
-  startDate   DateTime
-  endDate     DateTime
-  capacity    Int         @default(100)
-  status      EventStatus @default(ACTIVE)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+enum RegistrationStatus {
+  CONFIRMED
+  PENDING
+  CANCELLED
+}
 
-  passes   Pass[]
-  checkIns CheckIn[]
+model Event {
+  id                  String              @id @default(cuid())
+  title               String
+  description         String?             @db.Text
+  location            String?
+  startDate           DateTime
+  endDate             DateTime
+  capacity            Int                 @default(100)
+  status              EventStatus         @default(ACTIVE)
+  registrationId      String?             @unique
+  registrationEnabled Boolean             @default(false)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  passes        Pass[]
+  checkIns      CheckIn[]
+  registrations EventRegistration[]
 
   @@map("event")
 }
 
 model Pass {
-  id          String     @id @default(cuid())
-  eventId     String
-  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  token       String     @unique
-  holderName  String
-  holderEmail String
-  status      PassStatus @default(ACTIVE)
-  createdBy   String
-  creator     User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id             String             @id @default(cuid())
+  eventId        String
+  event          Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  token          String             @unique
+  holderName     String
+  holderEmail    String
+  status         PassStatus         @default(ACTIVE)
+  createdBy      String?
+  creator        User?              @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  registrationId String?
+  registration   EventRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   checkIns CheckIn[]
 
   @@index([eventId])
   @@index([token])
   @@index([createdBy])
+  @@index([registrationId])
   @@map("pass")
 }
 
@@ -286,4 +298,39 @@ model CheckIn {
   @@index([eventId])
   @@index([passId])
   @@map("checkIn")
+}
+
+model EventRegistration {
+  id           String             @id @default(cuid())
+  eventId      String
+  event        Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  primaryName  String
+  mobileNumber String
+  place        String
+  status       RegistrationStatus @default(CONFIRMED)
+  totalMembers Int                @default(1)
+
+  familyMembers RegistrationMember[]
+  passes        Pass[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([mobileNumber])
+  @@map("eventRegistration")
+}
+
+model RegistrationMember {
+  id             String            @id @default(cuid())
+  registrationId String
+  registration   EventRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  name           String
+  relation       String // Father, Mother, Husband, Wife, Son, Daughter, Brother, Sister, Other
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([registrationId])
+  @@map("registrationMember")
 }

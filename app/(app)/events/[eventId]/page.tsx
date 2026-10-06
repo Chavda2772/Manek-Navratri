@@ -1,10 +1,11 @@
 import { getEventDetailsAction } from "@/actions/event.actions";
 import { getUserSession } from "@/lib/auth/auth";
 import { UserRole } from "@/lib/generated/prisma/enums";
-import { Activity, ArrowRight, Calendar, MapPin, Scan, Ticket } from "lucide-react";
+import { Activity, ArrowRight, Calendar, MapPin, Scan, Ticket, Users, Link2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { EventDetailHeader } from "./components/event-detail-header";
+import { RegistrationLinkDialog } from "@/components/events/registration-link-dialog";
 
 import MobileNav from "@/components/tab/mobile-tab";
 import { hasAnyRole } from "@/lib/auth/permissions";
@@ -56,6 +57,11 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                   {event.status === "COMPLETED" && "✓ COMPLETED"}
                   {(!event.status || event.status === "ACTIVE") && "✓ ACTIVE"}
                 </span>
+                {event.registrationEnabled && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30">
+                    <Sparkles className="w-3 h-3" /> Registration Open
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-foreground break-words">{event.title}</h1>
               {event.location && (
@@ -68,28 +74,74 @@ export default async function EventDetailPage({ params }: EventPageProps) {
             <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5 sm:gap-3 w-full md:w-auto">
               <Link
                 href={`/events/${event.id}/passes`}
-                className="px-4 py-2.5 rounded-xl font-semibold text-xs bg-purple-600 hover:bg-purple-500 text-white transition-all shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
+                className="px-4 py-2.5 rounded-xl font-semibold text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-all flex items-center justify-center gap-2 border border-border w-full sm:w-auto"
               >
-                <Ticket className="w-4 h-4" /> Manage Passes ({event._count.passes})
+                <Ticket className="w-4 h-4" /> Passes ({event._count.passes})
               </Link>
               <Link
                 href={`/events/${event.id}/scanner`}
-                className="px-4 py-2.5 rounded-xl font-semibold text-xs bg-pink-600 hover:bg-pink-500 text-white transition-all shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
+                className="px-4 py-2.5 rounded-xl font-semibold text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-all flex items-center justify-center gap-2 border border-border w-full sm:w-auto"
               >
-                <Scan className="w-4 h-4" /> Open Gate Scanner
+                <Scan className="w-4 h-4" /> Gate Scanner
               </Link>
               <Link
                 href={`/events/${event.id}/check-ins`}
                 className="px-4 py-2.5 rounded-xl font-semibold text-xs bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-all flex items-center justify-center gap-2 border border-border w-full sm:w-auto"
               >
-                <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Check-in Logs
+                <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Logs
               </Link>
             </div>
           </div>
         </div>
 
+        {/* Public Registration Quick Feature Card */}
+        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-card border border-pink-500/25 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-pink-500 animate-pulse" />
+              <h3 className="text-base font-bold text-foreground">
+                Public Attendee Registration
+              </h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {event.registrationId
+                ? `Registration link active: /registration/${event.registrationId}. Accepts up to 4 family members per registrant.`
+                : "No public registration link generated yet. Click 'Registration Link' to generate one."}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <RegistrationLinkDialog
+              event={event}
+              trigger={
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-pink-600 hover:bg-pink-500 text-white transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  {event.registrationId ? "Share Link / QR" : "Generate Link"}
+                </button>
+              }
+            />
+            <Link
+              href={`/events/${event.id}/registrations`}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-all border border-border flex items-center justify-center gap-1.5"
+            >
+              <Users className="w-3.5 h-3.5 text-pink-500" /> View Attendees
+            </Link>
+          </div>
+        </div>
+
         {/* Metrics Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
+            <span className="text-xs font-semibold text-muted-foreground">Total Registrations</span>
+            <p className="mt-2 text-2xl font-bold text-pink-600 dark:text-pink-400">{stats?.totalRegistrations || 0}</p>
+            <span className="text-[11px] text-muted-foreground font-medium">
+              {stats?.totalRegisteredPeople || 0} People Total
+            </span>
+          </div>
+
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
             <span className="text-xs font-semibold text-muted-foreground">Total Issued Passes</span>
             <p className="mt-2 text-2xl font-bold text-foreground">{event._count.passes}</p>
@@ -99,7 +151,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
             <span className="text-xs font-semibold text-muted-foreground">Active Passes</span>
             <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats?.activePassesCount || 0}</p>
-            <span className="text-[11px] text-muted-foreground font-medium">Unscanned & Ready</span>
+            <span className="text-[11px] text-muted-foreground font-medium">Ready for entry</span>
           </div>
 
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
@@ -111,7 +163,7 @@ export default async function EventDetailPage({ params }: EventPageProps) {
           <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-xs">
             <span className="text-xs font-semibold text-muted-foreground">Scan Rejections</span>
             <p className="mt-2 text-2xl font-bold text-rose-600 dark:text-rose-400">{stats?.deniedCount || 0}</p>
-            <span className="text-[11px] text-muted-foreground font-medium">Double-scans / Invalid</span>
+            <span className="text-[11px] text-muted-foreground font-medium">Invalid attempts</span>
           </div>
         </div>
 

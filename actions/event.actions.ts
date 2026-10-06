@@ -152,7 +152,7 @@ export async function getEventsAction() {
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
-          select: { passes: true, checkIns: true },
+          select: { passes: true, checkIns: true, registrations: true },
         },
       },
     });
@@ -184,7 +184,7 @@ export async function getEventDetailsAction(eventId: string) {
           include: { pass: true },
         },
         _count: {
-          select: { passes: true, checkIns: true },
+          select: { passes: true, checkIns: true, registrations: true },
         },
       },
     });
@@ -209,6 +209,17 @@ export async function getEventDetailsAction(eventId: string) {
       where: { eventId, status: "USED" },
     });
 
+    const totalRegistrations = await prisma.eventRegistration.count({
+      where: { eventId },
+    });
+
+    const registeredPeopleAgg = await prisma.eventRegistration.aggregate({
+      where: { eventId, status: "CONFIRMED" },
+      _sum: { totalMembers: true },
+    });
+
+    const totalRegisteredPeople = registeredPeopleAgg._sum.totalMembers || 0;
+
     return {
       success: true,
       event,
@@ -217,6 +228,8 @@ export async function getEventDetailsAction(eventId: string) {
         deniedCount,
         activePassesCount,
         usedPassesCount,
+        totalRegistrations,
+        totalRegisteredPeople,
       },
     };
   } catch (error: any) {
