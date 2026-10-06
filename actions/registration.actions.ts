@@ -242,6 +242,35 @@ export async function sendRegistrationOtpAction(input: {
       return { success: false, error: `Event is currently ${event.status.toLowerCase()}. Registration is closed.` };
     }
 
+    // Check if this mobile number has already registered for this event
+    const existingRegistration = await prisma.eventRegistration.findFirst({
+      where: {
+        eventId: event.id,
+        mobileNumber: cleanedMobile,
+        status: "CONFIRMED",
+      },
+      include: {
+        familyMembers: {
+          orderBy: { createdAt: "asc" },
+        },
+        passes: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    if (existingRegistration) {
+      return {
+        success: true,
+        alreadyRegistered: true,
+        registrationId: existingRegistration.id,
+        primaryName: existingRegistration.primaryName,
+        totalMembers: existingRegistration.totalMembers,
+        message: "This mobile number is already registered for this event.",
+        mobileNumber: cleanedMobile,
+      };
+    }
+
     // Generate random 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const identifier = `otp:${event.registrationId || registrationId}:${cleanedMobile}`;
@@ -279,6 +308,73 @@ export async function sendRegistrationOtpAction(input: {
 }
 
 /**
+ * Public action: Check if a mobile number is already registered for an event.
+ */
+export async function checkMobileRegistrationAction(input: {
+  registrationId: string;
+  mobileNumber: string;
+}) {
+  try {
+    const { registrationId, mobileNumber } = input;
+    const cleanedMobile = cleanPhoneNumber(mobileNumber);
+
+    if (!cleanedMobile || cleanedMobile.length !== 10) {
+      return { success: false, error: "Please enter a valid 10-digit mobile number." };
+    }
+
+    const event = await prisma.event.findFirst({
+      where: {
+        OR: [{ registrationId }, { id: registrationId }],
+      },
+    });
+
+    if (!event) {
+      return { success: false, error: "Event not found." };
+    }
+
+    const existingRegistration = await prisma.eventRegistration.findFirst({
+      where: {
+        eventId: event.id,
+        mobileNumber: cleanedMobile,
+        status: "CONFIRMED",
+      },
+      include: {
+        familyMembers: {
+          orderBy: { createdAt: "asc" },
+        },
+        passes: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+
+    if (existingRegistration) {
+      return {
+        success: true,
+        isRegistered: true,
+        registrationId: existingRegistration.id,
+        primaryName: existingRegistration.primaryName,
+        totalMembers: existingRegistration.totalMembers,
+        place: existingRegistration.place,
+        familyMembers: existingRegistration.familyMembers.map((m) => ({
+          name: m.name,
+          relation: m.relation,
+        })),
+        passesCount: existingRegistration.passes.length,
+      };
+    }
+
+    return {
+      success: true,
+      isRegistered: false,
+    };
+  } catch (error: any) {
+    console.error("checkMobileRegistrationAction error:", error);
+    return { success: false, error: "Failed to check registration status." };
+  }
+}
+
+/**
  * Public action: Verifies OTP and returns a session token.
  */
 export async function verifyRegistrationOtpAction(input: {
@@ -303,6 +399,25 @@ export async function verifyRegistrationOtpAction(input: {
 
     if (!event) {
       return { success: false, error: "Event not found." };
+    }
+
+    // If mobile number was already registered, return its registrationId immediately
+    const existingRegistration = await prisma.eventRegistration.findFirst({
+      where: {
+        eventId: event.id,
+        mobileNumber: cleanedMobile,
+        status: "CONFIRMED",
+      },
+    });
+
+    if (existingRegistration) {
+      return {
+        success: true,
+        alreadyRegistered: true,
+        registrationId: existingRegistration.id,
+        sessionToken: "",
+        mobileNumber: cleanedMobile,
+      };
     }
 
     const regKey = event.registrationId || registrationId;
@@ -422,6 +537,24 @@ export async function submitEventRegistrationAction(input: SubmitRegistrationInp
       };
     }
 
+    // Enforce: single mobile number can register single time for single event
+    const existingRegistration = await prisma.eventRegistration.findFirst({
+      where: {
+        eventId: event.id,
+        mobileNumber: cleanedMobile,
+        status: "CONFIRMED",
+      },
+    });
+
+    if (existingRegistration) {
+      return {
+        success: false,
+        alreadyRegistered: true,
+        registrationId: existingRegistration.id,
+        error: "This mobile number is already registered for this event. Each mobile number can only register once per event.",
+      };
+    }
+
     // Validate family members
     const rawFamily = input.familyMembers || [];
     if (rawFamily.length > MAX_FAMILY_MEMBERS) {
@@ -468,6 +601,18 @@ export async function submitEventRegistrationAction(input: SubmitRegistrationInp
 
     // Database transaction: create registration, family members, and entry passes
     const result = await prisma.$transaction(async (tx) => {
+      // Double check inside transaction to prevent concurrent duplicate registrations
+      const txExisting = await tx.eventRegistration.findFirst({
+        where: {
+          eventId: event.id,
+          mobileNumber: cleanedMobile,
+          status: "CONFIRMED",
+        },
+      });
+      if (txExisting) {
+        throw new Error("This mobile number is already registered for this event.");
+      }
+
       // 1. Create EventRegistration
       const reg = await tx.eventRegistration.create({
         data: {
@@ -565,6 +710,12 @@ export async function getRegistrationConfirmationAction(registrationId: string) 
         },
         passes: {
           orderBy: { createdAt: "asc" },
+          include: {
+            checkIns: {
+              where: { status: "APPROVED" },
+              orderBy: { scannedAt: "desc" },
+            },
+          },
         },
       },
     });

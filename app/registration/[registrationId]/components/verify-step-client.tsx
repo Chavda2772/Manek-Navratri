@@ -69,6 +69,14 @@ export function VerifyStepClient({ registrationId, event }: VerifyStepClientProp
         return;
       }
 
+      if (res.alreadyRegistered && res.registrationId) {
+        toast.info("Registration found for this mobile number! Showing your pass...");
+        router.push(
+          `/registration/${registrationId}/success?id=${res.registrationId}&alreadyRegistered=true`
+        );
+        return;
+      }
+
       toast.success("Phone number verified successfully!");
 
       // Redirect to registration form with phone and session token
@@ -100,6 +108,14 @@ export function VerifyStepClient({ registrationId, event }: VerifyStepClientProp
 
       if (!res.success) {
         toast.error(res.error || "Failed to resend code");
+        return;
+      }
+
+      if (res.alreadyRegistered && res.registrationId) {
+        toast.info("Registration already exists for this number! Showing your pass...");
+        router.push(
+          `/registration/${registrationId}/success?id=${res.registrationId}&alreadyRegistered=true`
+        );
         return;
       }
 

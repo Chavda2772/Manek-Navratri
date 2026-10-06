@@ -315,13 +315,6 @@ export function EventRegisteredAttendees({
               <h2 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
                 {title}
               </h2>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30">
-                {registrations.length} Registrations
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                <Scan className="w-3 h-3" />
-                {totalEventScans} Total Scans
-              </span>
             </div>
             <p className="text-xs text-muted-foreground">
               Click any registered user to inspect their group, family members, and entry passes.
@@ -630,9 +623,6 @@ export function EventRegisteredAttendees({
                   </div>
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[10px] text-muted-foreground bg-card/80 px-2 py-0.5 rounded-md border border-border">
-                        ID: {selectedRegistration.id.slice(-8)}
-                      </span>
                       <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                         {selectedRegistration.status}
                       </span>
@@ -640,18 +630,6 @@ export function EventRegisteredAttendees({
                         {selectedRegistration.totalMembers}{" "}
                         {selectedRegistration.totalMembers === 1 ? "Person" : "People"}
                       </span>
-
-                      {selectedScanStats && selectedScanStats.totalScans > 0 ? (
-                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                          <Scan className="w-3 h-3" />
-                          {selectedScanStats.totalScans} Total {selectedScanStats.totalScans === 1 ? "Scan" : "Scans"}
-                          {selectedScanStats.extraScans > 0 && ` (+${selectedScanStats.extraScans} extra)`}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                          0 Gate Scans
-                        </span>
-                      )}
                     </div>
                     <h3 className="text-xl sm:text-2xl font-black text-foreground">
                       {selectedRegistration.primaryName}

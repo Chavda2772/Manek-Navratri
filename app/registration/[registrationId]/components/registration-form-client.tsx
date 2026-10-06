@@ -144,12 +144,19 @@ export function RegistrationFormClient({ registrationId, event }: RegistrationFo
       });
 
       if (!res.success) {
+        if (res.alreadyRegistered && res.registrationId) {
+          toast.info("This mobile number is already registered. Redirecting to your pass...");
+          router.push(
+            `/registration/${registrationId}/success?id=${res.registrationId}&alreadyRegistered=true`
+          );
+          return;
+        }
         toast.error(res.error || "Failed to submit registration");
         return;
       }
 
       toast.success("Registration completed successfully!");
-      router.push(`/registration/${registrationId}/success?id=${res.registrationId}` as any);
+      router.push(`/registration/${registrationId}/success?id=${res.registrationId}`);
     } catch (err: any) {
       console.error(err);
       toast.error("Network error. Please try again.");
