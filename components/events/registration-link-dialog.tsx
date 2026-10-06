@@ -207,8 +207,8 @@ export function RegistrationLinkDialog({
                   size="sm"
                   variant="outline"
                   className={`rounded-xl text-xs font-bold cursor-pointer h-8 px-3 ${registrationEnabled
-                      ? "text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
-                      : "text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                    ? "text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                    : "text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
                     }`}
                 >
                   <Power className="w-3 h-3 mr-1" />
@@ -284,7 +284,6 @@ export function RegistrationLinkDialog({
                   <QRCodeView
                     data={publicUrl}
                     size={180}
-                    showDownload={true}
                     fileName={`${event.title}-registration-qr`}
                     className="bg-white p-3 rounded-2xl"
                   />
