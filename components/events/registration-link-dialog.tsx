@@ -140,7 +140,7 @@ export function RegistrationLinkDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
+      {trigger && <DialogTrigger render={trigger as any} />}
       <DialogContent className="sm:max-w-md rounded-3xl p-6 sm:p-7 bg-card border-border shadow-2xl">
         <DialogHeader className="space-y-1.5 text-left">
           <div className="flex items-center gap-2">

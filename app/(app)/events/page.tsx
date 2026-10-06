@@ -6,7 +6,7 @@ import { hasAnyRole } from "@/lib/auth/permissions";
 import { UserRole } from "@/lib/generated/prisma/enums";
 import { Calendar } from "lucide-react";
 import { redirect } from "next/navigation";
-import { CreateEventDialog } from "./components/create-event-dialog";
+import { AddEditEvent } from "./components/add-edit-event-dialog";
 import EventsCard from "./components/event-card";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export default async function AdminEventsPage() {
               Create and manage events, configure ticket issuance, and launch access controllers.
             </p>
           </div>
-          <CreateEventDialog />
+          <AddEditEvent />
         </div>
 
         {/* Events Grid */}

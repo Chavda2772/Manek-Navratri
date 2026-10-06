@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "event" ALTER COLUMN "capacity" DROP NOT NULL,
+ALTER COLUMN "capacity" DROP DEFAULT;

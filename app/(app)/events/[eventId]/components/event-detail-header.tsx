@@ -2,17 +2,15 @@
 
 import { useState } from "react";
 import { BackHeader } from "@/components/header/back-header";
-import { EditEventDialog } from "./edit-event-dialog";
-import { UpdateStatusDialog } from "./update-status-dialog";
-import { Pencil, Activity } from "lucide-react";
+import { AddEditEvent } from "../../components/add-edit-event-dialog";
+import { Pencil } from "lucide-react";
 
 interface EventDetailHeaderProps {
   event: any;
 }
 
 export function EventDetailHeader({ event }: EventDetailHeaderProps) {
-  const [editOpen, setEditOpen] = useState(false);
-  const [statusOpen, setStatusOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <>
@@ -21,20 +19,15 @@ export function EventDetailHeader({ event }: EventDetailHeaderProps) {
         showProfile={false}
         menuItems={[
           {
-            label: "Edit Event Details",
+            label: "Edit Event & Status",
             icon: <Pencil className="w-4 h-4 text-pink-500" />,
-            onClick: () => setEditOpen(true),
-          },
-          {
-            label: "Update Status",
-            icon: <Activity className="w-4 h-4 text-emerald-500" />,
-            onClick: () => setStatusOpen(true),
+            onClick: () => setDialogOpen(true),
           },
         ]}
       />
 
-      <EditEventDialog event={event} open={editOpen} onOpenChange={setEditOpen} />
-      <UpdateStatusDialog event={event} open={statusOpen} onOpenChange={setStatusOpen} />
+      <AddEditEvent event={event} open={dialogOpen} onOpenChange={setDialogOpen} />
     </>
   );
 }
+

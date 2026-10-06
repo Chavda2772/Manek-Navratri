@@ -8,8 +8,8 @@ interface EventRegHeaderProps {
     location?: string | null;
     startDate: Date | string;
     endDate?: Date | string;
-    capacity?: number;
-    remainingSpots?: number;
+    capacity?: number | null;
+    remainingSpots?: number | null;
   };
   currentStep: 1 | 2 | 3 | 4;
 }

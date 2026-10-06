@@ -190,8 +190,8 @@ export async function getPublicRegistrationEventAction(registrationId: string) {
     });
 
     const totalRegisteredPeople = peopleCountAggregate._sum.totalMembers || 0;
-    const remainingSpots = Math.max(0, event.capacity - totalRegisteredPeople);
-    const isFull = event.capacity > 0 && remainingSpots <= 0;
+    const remainingSpots = event.capacity ? Math.max(0, event.capacity - totalRegisteredPeople) : null;
+    const isFull = event.capacity && event.capacity > 0 ? (remainingSpots !== null && remainingSpots <= 0) : false;
 
     return {
       success: true,
@@ -261,9 +261,9 @@ export async function sendRegistrationOtpAction(input: {
       },
     });
 
-    console.log(
-      `\n========================================\n[EVENT REGISTRATION OTP]\nEvent: ${event.title}\nMobile: +91 ${cleanedMobile}\nOTP: ${otp}\n========================================\n`
-    );
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`\n========================================\n[EVENT REGISTRATION OTP]\nEvent: ${event.title}\nMobile: +91 ${cleanedMobile}\nOTP: ${otp}\n========================================\n`);
+    }
 
     // Provide OTP in response during development or testing
     return {
@@ -458,7 +458,7 @@ export async function submitEventRegistrationAction(input: SubmitRegistrationInp
     });
 
     const currentTotal = peopleCountAggregate._sum.totalMembers || 0;
-    if (event.capacity > 0 && currentTotal + totalPeople > event.capacity) {
+    if (event.capacity && event.capacity > 0 && currentTotal + totalPeople > event.capacity) {
       const spotsLeft = Math.max(0, event.capacity - currentTotal);
       return {
         success: false,
@@ -593,8 +593,18 @@ export async function getEventRegistrationsAction(eventId: string) {
       where: { eventId },
       orderBy: { createdAt: "desc" },
       include: {
-        familyMembers: true,
-        passes: true,
+        familyMembers: {
+          orderBy: { createdAt: "asc" },
+        },
+        passes: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            checkIns: {
+              orderBy: { scannedAt: "desc" },
+              take: 1,
+            },
+          },
+        },
       },
     });
 
@@ -623,6 +633,11 @@ export async function deleteEventRegistrationAction(eventId: string, registratio
     if (!(await isUserModerator())) {
       return { success: false, error: "Unauthorized: Admin privileges required" };
     }
+
+    // Delete associated passes first so no orphan passes remain
+    await prisma.pass.deleteMany({
+      where: { registrationId: registrationRecordId },
+    });
 
     await prisma.eventRegistration.delete({
       where: { id: registrationRecordId },

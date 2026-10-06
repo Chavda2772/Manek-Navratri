@@ -19,7 +19,7 @@ export interface CreateEventInput {
   location?: string;
   startDate: string;
   endDate: string;
-  capacity?: number;
+  capacity?: number | null;
 }
 
 export interface UpdateEventInput {
@@ -29,7 +29,8 @@ export interface UpdateEventInput {
   location?: string;
   startDate: string;
   endDate: string;
-  capacity?: number;
+  capacity?: number | null;
+  status?: "ACTIVE" | "ON_HOLD" | "COMPLETED";
 }
 
 export interface CreatePassInput {
@@ -72,7 +73,7 @@ export async function createEventAction(input: CreateEventInput) {
         location: input.location || null,
         startDate: new Date(input.startDate),
         endDate: new Date(input.endDate),
-        capacity: input.capacity ? Number(input.capacity) : 100,
+        capacity: input.capacity ? Number(input.capacity) : null,
       },
     });
 
@@ -100,7 +101,8 @@ export async function updateEventAction(input: UpdateEventInput) {
         location: input.location || null,
         startDate: new Date(input.startDate),
         endDate: new Date(input.endDate),
-        capacity: input.capacity ? Number(input.capacity) : 100,
+        capacity: input.capacity ? Number(input.capacity) : null,
+        ...(input.status ? { status: input.status as any } : {}),
       },
     });
 

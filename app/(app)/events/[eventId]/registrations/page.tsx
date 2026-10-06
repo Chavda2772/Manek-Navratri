@@ -42,7 +42,7 @@ export default async function EventRegistrationsPage({ params }: RegistrationsPa
       <div className="flex-1 space-y-6 p-4 sm:p-6 pb-34 max-w-7xl mx-auto w-full">
         {/* Page Header */}
         <div className="rounded-3xl bg-card border border-border p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 text-xs font-bold border border-pink-500/20">
                 <Sparkles className="w-3 h-3" /> Public Registrations
