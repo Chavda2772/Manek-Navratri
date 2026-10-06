@@ -17,12 +17,16 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Copy,
   ExternalLink,
   Heart,
+  History,
+  Infinity as InfinityIcon,
   MapPin,
   Phone,
   QrCode,
+  Scan,
   Search,
   Share2,
   Sparkles,
@@ -70,6 +74,77 @@ export interface EventRegistrationWithDetails {
   }>;
 }
 
+function getRegistrationScanStats(reg: EventRegistrationWithDetails) {
+  const passes = reg.passes || [];
+  const totalScans = passes.reduce((sum, p) => sum + (p.checkIns?.length || 0), 0);
+  const checkedInMembersCount = passes.filter((p) => (p.checkIns?.length || 0) > 0).length;
+  const extraScans = Math.max(0, totalScans - checkedInMembersCount);
+  const totalMembers = reg.totalMembers || Math.max(1, (reg.familyMembers?.length || 0) + 1);
+
+  return {
+    totalScans,
+    checkedInMembersCount,
+    extraScans,
+    totalMembers,
+  };
+}
+
+function getPassForMember(
+  passes: EventRegistrationWithDetails["passes"] | undefined,
+  memberName: string,
+  isPrimary?: boolean
+) {
+  if (!passes || passes.length === 0) return null;
+  const cleanTarget = memberName.toLowerCase().trim();
+
+  if (isPrimary) {
+    const primaryByEmail = passes.find((p) => {
+      const emailPrefix = (p.holderEmail || "").split("@")[0];
+      return !emailPrefix.includes("+") && p.holderName.toLowerCase().trim() === cleanTarget;
+    });
+    if (primaryByEmail) return primaryByEmail;
+  } else {
+    const familyByEmail = passes.find((p) => {
+      const emailPrefix = (p.holderEmail || "").split("@")[0];
+      return emailPrefix.includes("+") && p.holderName.toLowerCase().trim() === cleanTarget;
+    });
+    if (familyByEmail) return familyByEmail;
+  }
+
+  const exactName = passes.find((p) => p.holderName.toLowerCase().trim() === cleanTarget);
+  if (exactName) return exactName;
+
+  return passes.find((p) => cleanTarget.includes(p.holderName.toLowerCase().trim()) || p.holderName.toLowerCase().trim().includes(cleanTarget)) || null;
+}
+
+function getMemberScanStats(pass: EventRegistrationWithDetails["passes"][0] | null | undefined) {
+  if (!pass) {
+    return {
+      pass: null,
+      scanCount: 0,
+      extraScans: 0,
+      hasScanned: false,
+      latestCheckIn: null,
+      checkIns: [] as NonNullable<EventRegistrationWithDetails["passes"][0]["checkIns"]>,
+    };
+  }
+
+  const checkIns = pass.checkIns || [];
+  const scanCount = checkIns.length;
+  const extraScans = Math.max(0, scanCount - 1);
+  const hasScanned = scanCount > 0;
+  const latestCheckIn = checkIns[0] || null;
+
+  return {
+    pass,
+    scanCount,
+    extraScans,
+    hasScanned,
+    latestCheckIn,
+    checkIns,
+  };
+}
+
 interface EventRegisteredAttendeesProps {
   eventId: string;
   event: any;
@@ -77,6 +152,7 @@ interface EventRegisteredAttendeesProps {
   stats?: {
     totalRegistrations?: number;
     totalPeople?: number;
+    totalScans?: number;
     totalRegisteredPeople?: number;
     [key: string]: any;
   };
@@ -130,6 +206,14 @@ export function EventRegisteredAttendees({
   const selectedRegistration =
     registrations.find((r) => r.id === selectedId) ||
     (filteredRegistrations.length > 0 ? filteredRegistrations[0] : null);
+
+  const selectedScanStats = selectedRegistration
+    ? getRegistrationScanStats(selectedRegistration)
+    : null;
+  const primaryPass = selectedRegistration
+    ? getPassForMember(selectedRegistration.passes, selectedRegistration.primaryName, true)
+    : null;
+  const primaryStats = getMemberScanStats(primaryPass);
 
   const handleSelectAttendee = (id: string) => {
     setSelectedId(id);
@@ -211,6 +295,13 @@ export function EventRegisteredAttendees({
     return "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30";
   };
 
+  const totalEventScans =
+    stats?.totalScans ??
+    registrations.reduce(
+      (sum, r) => sum + (r.passes || []).reduce((pSum, p) => pSum + (p.checkIns?.length || 0), 0),
+      0
+    );
+
   return (
     <div className="space-y-4">
       {/* Section Header Bar */}
@@ -220,12 +311,16 @@ export function EventRegisteredAttendees({
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
                 {title}
               </h2>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30">
-                {registrations.length}
+                {registrations.length} Registrations
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                <Scan className="w-3 h-3" />
+                {totalEventScans} Total Scans
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -378,9 +473,7 @@ export function EventRegisteredAttendees({
               filteredRegistrations.map((reg) => {
                 const isSelected = selectedRegistration?.id === reg.id;
                 const hasFamily = reg.familyMembers && reg.familyMembers.length > 0;
-                const checkedInCount =
-                  reg.passes?.filter((p) => p.status === "USED" || (p.checkIns && p.checkIns.length > 0))
-                    .length || 0;
+                const scanStats = getRegistrationScanStats(reg);
 
                 return (
                   <div
@@ -441,14 +534,31 @@ export function EventRegisteredAttendees({
                               </span>
                             )}
 
-                            {checkedInCount > 0 ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                <CheckCircle2 className="w-2.5 h-2.5" />
-                                {checkedInCount}/{reg.passes?.length || reg.totalMembers} Entered
-                              </span>
+                            {scanStats.totalScans > 0 ? (
+                              <>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                  <Scan className="w-2.5 h-2.5" />
+                                  {scanStats.totalScans} {scanStats.totalScans === 1 ? "Scan" : "Scans"}
+                                </span>
+
+                                {scanStats.extraScans > 0 && (
+                                  <span
+                                    className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30"
+                                    title={`${scanStats.checkedInMembersCount} member(s) scanned + ${scanStats.extraScans} extra re-entries`}
+                                  >
+                                    +{scanStats.extraScans} extra
+                                  </span>
+                                )}
+
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground bg-muted/60">
+                                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                                  {scanStats.checkedInMembersCount}/{scanStats.totalMembers} Entered
+                                </span>
+                              </>
                             ) : (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground bg-muted/60">
-                                {reg.passes?.length || 0} Passes
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground bg-muted/60">
+                                <Ticket className="w-2.5 h-2.5 opacity-60" />
+                                0 Scans • {reg.passes?.length || reg.totalMembers} Passes
                               </span>
                             )}
                           </div>
@@ -530,6 +640,18 @@ export function EventRegisteredAttendees({
                         {selectedRegistration.totalMembers}{" "}
                         {selectedRegistration.totalMembers === 1 ? "Person" : "People"}
                       </span>
+
+                      {selectedScanStats && selectedScanStats.totalScans > 0 ? (
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                          <Scan className="w-3 h-3" />
+                          {selectedScanStats.totalScans} Total {selectedScanStats.totalScans === 1 ? "Scan" : "Scans"}
+                          {selectedScanStats.extraScans > 0 && ` (+${selectedScanStats.extraScans} extra)`}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                          0 Gate Scans
+                        </span>
+                      )}
                     </div>
                     <h3 className="text-xl sm:text-2xl font-black text-foreground">
                       {selectedRegistration.primaryName}
@@ -559,6 +681,155 @@ export function EventRegisteredAttendees({
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
+              </div>
+
+              {/* Group Gate Scans Overview KPI Grid */}
+              {selectedScanStats && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                        <Scan className="w-3.5 h-3.5" /> Total Scans
+                      </span>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                      {selectedScanStats.totalScans}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground block truncate">
+                      {selectedScanStats.extraScans > 0
+                        ? `${selectedScanStats.checkedInMembersCount} initial + ${selectedScanStats.extraScans} re-entries`
+                        : selectedScanStats.totalScans > 0
+                          ? "Single entries verified"
+                          : "No gate scans yet"}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-card border border-border space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-pink-500" /> Members In
+                      </span>
+                      <span className="text-[10px] font-bold text-pink-600 dark:text-pink-400">
+                        {Math.round(
+                          (selectedScanStats.checkedInMembersCount / Math.max(1, selectedScanStats.totalMembers)) * 100
+                        )}%
+                      </span>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-black text-foreground">
+                      {selectedScanStats.checkedInMembersCount}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        /{selectedScanStats.totalMembers}
+                      </span>
+                    </p>
+                    <span className="text-[10px] text-muted-foreground block truncate">
+                      {selectedScanStats.checkedInMembersCount === selectedScanStats.totalMembers
+                        ? "✓ Entire group entered"
+                        : `${selectedScanStats.totalMembers - selectedScanStats.checkedInMembersCount} pending entry`}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/25 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-purple-700 dark:text-purple-400 flex items-center gap-1">
+                        <InfinityIcon className="w-3.5 h-3.5" /> Extra Scans
+                      </span>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400">
+                      +{selectedScanStats.extraScans}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground block truncate">
+                      {selectedScanStats.extraScans > 0
+                        ? "Multi-use pass re-entries"
+                        : "No re-entries logged"}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-card border border-border space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                        <Ticket className="w-3.5 h-3.5 text-cyan-500" /> Pass Tokens
+                      </span>
+                      <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        Active
+                      </span>
+                    </div>
+                    <p className="text-xl sm:text-2xl font-black text-foreground">
+                      {selectedRegistration.passes?.length || 0}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground block truncate">
+                      Valid till event ends
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Primary Attendee Pass & Scan Status Banner */}
+              <div className="p-4 rounded-2xl bg-pink-500/5 border border-pink-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/25 flex items-center justify-center font-black text-sm shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-sm font-bold text-foreground truncate">
+                        {selectedRegistration.primaryName}
+                      </h4>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/25">
+                        Primary Registrant
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      {primaryStats.hasScanned ? (
+                        <>
+                          <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/25">
+                            <Scan className="w-3 h-3" />
+                            Scanned {primaryStats.scanCount} {primaryStats.scanCount === 1 ? "time" : "times"}
+                          </span>
+                          {primaryStats.extraScans > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25">
+                              +{primaryStats.extraScans} extra re-entries
+                            </span>
+                          )}
+                          {primaryStats.latestCheckIn && (
+                            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-muted-foreground/60" />
+                              Last entry: {new Date(primaryStats.latestCheckIn.scannedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                          0 Scans • Pass not used at gate yet
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {primaryPass && (
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setSelectedPassForQr({
+                          token: primaryPass.token,
+                          holderName: primaryPass.holderName,
+                        })
+                      }
+                      className="rounded-xl text-xs font-semibold h-8.5 px-3 bg-card border-border hover:bg-muted cursor-pointer"
+                    >
+                      <QrCode className="w-3.5 h-3.5 mr-1.5 text-pink-500" /> View QR
+                    </Button>
+                    <Link
+                      href={`/p/${primaryPass.token}`}
+                      target="_blank"
+                      className="text-xs font-bold text-pink-600 dark:text-pink-400 hover:underline px-2 py-1 flex items-center gap-1"
+                    >
+                      Pass <ExternalLink className="w-3 h-3" />
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Attendee Details Grid */}
@@ -636,35 +907,91 @@ export function EventRegisteredAttendees({
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {selectedRegistration.familyMembers.map((member) => (
-                      <div
-                        key={member.id}
-                        className="p-3 rounded-2xl bg-muted/30 border border-border flex items-center justify-between gap-2"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-xl bg-card border border-border flex items-center justify-center text-xs font-bold text-foreground shrink-0">
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <h5 className="text-xs font-bold text-foreground truncate">
-                              {member.name}
-                            </h5>
-                            <span className="text-[10px] text-muted-foreground">
-                              Family Member
-                            </span>
-                          </div>
-                        </div>
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {selectedRegistration.familyMembers.map((member) => {
+                      const memberPass = getPassForMember(selectedRegistration.passes, member.name, false);
+                      const mStats = getMemberScanStats(memberPass);
 
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${getRelationBadgeColor(
-                            member.relation
-                          )}`}
+                      return (
+                        <div
+                          key={member.id}
+                          className="p-3.5 rounded-2xl bg-muted/30 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-pink-500/25 transition-all"
                         >
-                          {member.relation}
-                        </span>
-                      </div>
-                    ))}
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-xs font-bold text-foreground shrink-0 mt-0.5">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h5 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                  {member.name}
+                                </h5>
+                                <span
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${getRelationBadgeColor(
+                                    member.relation
+                                  )}`}
+                                >
+                                  {member.relation}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                                {mStats.hasScanned ? (
+                                  <>
+                                    <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/25">
+                                      <Scan className="w-2.5 h-2.5" />
+                                      Scanned {mStats.scanCount} {mStats.scanCount === 1 ? "time" : "times"}
+                                    </span>
+
+                                    {mStats.extraScans > 0 && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25">
+                                        +{mStats.extraScans} extra scans
+                                      </span>
+                                    )}
+
+                                    {mStats.latestCheckIn && (
+                                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                        <Clock className="w-3 h-3 text-muted-foreground/60" />
+                                        Last entry: {new Date(mStats.latestCheckIn.scannedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                                    0 Scans • Not entered yet
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {memberPass && (
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setSelectedPassForQr({
+                                    token: memberPass.token,
+                                    holderName: member.name,
+                                  })
+                                }
+                                className="rounded-xl text-xs font-semibold h-8 px-2.5 bg-card border-border hover:bg-muted cursor-pointer"
+                              >
+                                <QrCode className="w-3.5 h-3.5 mr-1 text-pink-500" /> View QR
+                              </Button>
+                              <Link
+                                href={`/p/${memberPass.token}`}
+                                target="_blank"
+                                className="text-xs font-bold text-pink-600 dark:text-pink-400 hover:underline px-1.5 py-1 flex items-center gap-1"
+                              >
+                                Pass <ExternalLink className="w-3 h-3" />
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -677,7 +1004,7 @@ export function EventRegisteredAttendees({
                     Gate Entry Passes ({selectedRegistration.passes?.length || 0})
                   </h4>
                   <span className="text-[11px] text-muted-foreground">
-                    Unique QR tokens for gate scanner
+                    Passes valid until event ends
                   </span>
                 </div>
 
@@ -690,73 +1017,109 @@ export function EventRegisteredAttendees({
                 ) : (
                   <div className="space-y-2.5">
                     {selectedRegistration.passes.map((pass) => {
-                      const isUsed = pass.status === "USED";
-                      const latestCheckIn = pass.checkIns?.[0];
+                      const checkIns = pass.checkIns || [];
+                      const scanCount = checkIns.length;
+                      const extraCount = Math.max(0, scanCount - 1);
+                      const isUsed = scanCount > 0;
+                      const latestCheckIn = checkIns[0];
 
                       return (
                         <div
                           key={pass.id}
-                          className="p-3.5 rounded-2xl bg-muted/25 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-pink-500/30 transition-all"
+                          className="p-3.5 rounded-2xl bg-muted/25 border border-border space-y-2.5 hover:border-pink-500/30 transition-all"
                         >
-                          <div className="space-y-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h5 className="text-xs sm:text-sm font-bold text-foreground truncate">
-                                {pass.holderName}
-                              </h5>
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isUsed
-                                  ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30"
-                                  : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                                  }`}
-                              >
-                                {isUsed ? "✓ Checked In" : "✓ Active"}
-                              </span>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono">
-                              <span className="bg-muted px-2 py-0.5 rounded-md text-[10px]">
-                                {pass.token}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleCopyText(pass.token, "Pass token")}
-                                className="text-muted-foreground hover:text-foreground cursor-pointer"
-                                title="Copy Token"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </button>
-                              {latestCheckIn && (
-                                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-sans font-semibold">
-                                  Scanned at {new Date(latestCheckIn.scannedAt).toLocaleTimeString()}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h5 className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                  {pass.holderName}
+                                </h5>
+                                <span
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isUsed
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                    : "bg-muted text-muted-foreground border-border"
+                                    }`}
+                                >
+                                  {isUsed
+                                    ? `✓ Scanned ${scanCount} ${scanCount === 1 ? "time" : "times"}`
+                                    : "Not Scanned Yet"}
                                 </span>
-                              )}
+
+                                {extraCount > 0 && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                                    +{extraCount} extra re-entries
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                                <span className="bg-muted px-2 py-0.5 rounded-md text-[10px]">
+                                  {pass.token}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(pass.token, "Pass token")}
+                                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                                  title="Copy Token"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </button>
+                                {latestCheckIn && (
+                                  <span className="text-[10px] text-purple-600 dark:text-purple-400 font-sans font-semibold">
+                                    Last scanned at {new Date(latestCheckIn.scannedAt).toLocaleTimeString()}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setSelectedPassForQr({
+                                    token: pass.token,
+                                    holderName: pass.holderName,
+                                  })
+                                }
+                                className="rounded-xl text-xs font-semibold h-8.5 px-3 bg-card border-border hover:bg-muted cursor-pointer"
+                              >
+                                <QrCode className="w-3.5 h-3.5 mr-1.5 text-pink-500" />
+                                View QR
+                              </Button>
+
+                              <Link
+                                href={`/p/${pass.token}`}
+                                target="_blank"
+                                className="text-xs font-bold text-pink-600 dark:text-pink-400 hover:underline px-2.5 py-1.5 flex items-center gap-1"
+                              >
+                                Pass Page <ExternalLink className="w-3 h-3" />
+                              </Link>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                setSelectedPassForQr({
-                                  token: pass.token,
-                                  holderName: pass.holderName,
-                                })
-                              }
-                              className="rounded-xl text-xs font-semibold h-8.5 px-3 bg-card border-border hover:bg-muted cursor-pointer"
-                            >
-                              <QrCode className="w-3.5 h-3.5 mr-1.5 text-pink-500" />
-                              View QR
-                            </Button>
-
-                            <Link
-                              href={`/p/${pass.token}`}
-                              target="_blank"
-                              className="text-xs font-bold text-pink-600 dark:text-pink-400 hover:underline px-2.5 py-1.5 flex items-center gap-1"
-                            >
-                              Pass Page <ExternalLink className="w-3 h-3" />
-                            </Link>
-                          </div>
+                          {/* Multiple scan history trail if scanned more than once */}
+                          {checkIns.length > 1 && (
+                            <div className="pt-2 border-t border-border/50 space-y-1.5">
+                              <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-wider">
+                                <History className="w-3 h-3 text-purple-500" />
+                                All Gate Entries ({checkIns.length})
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {checkIns.map((ci, idx) => (
+                                  <span
+                                    key={ci.id}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono bg-background/80 text-foreground border border-border"
+                                  >
+                                    <span className="font-sans font-bold text-emerald-600 dark:text-emerald-400">
+                                      Entry #{checkIns.length - idx}
+                                    </span>
+                                    {new Date(ci.scannedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

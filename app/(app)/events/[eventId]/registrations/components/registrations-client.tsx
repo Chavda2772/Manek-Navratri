@@ -9,6 +9,7 @@ interface RegistrationsClientProps {
   stats: {
     totalRegistrations: number;
     totalPeople: number;
+    totalScans?: number;
   };
 }
 

@@ -28,13 +28,17 @@ export default async function GateScannerPage({ params }: ScannerPageProps) {
 
   return (
     <>
-      <BackHeader title={`Gate Scanner — ${res.event.title}`} />
+      <div className="hidden md:block">
+        <BackHeader title={`Gate Scanner — ${res.event.title}`} />
+      </div>
 
-      <div className="flex-1 space-y-6 p-4 sm:p-6 pb-34 max-w-7xl mx-auto w-full">
+      <div className="flex-1 md:p-6 md:pb-24 max-w-7xl mx-auto w-full">
         <AdminScannerClient event={res.event} />
       </div>
 
-      <MobileNav />
+      <div className="hidden md:block">
+        <MobileNav />
+      </div>
     </>
   );
 }

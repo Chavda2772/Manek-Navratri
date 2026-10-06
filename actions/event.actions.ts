@@ -51,7 +51,22 @@ export interface ScanResult {
     holderEmail: string;
     status: string;
     usedAt?: Date | string | null;
+    totalCheckIns?: number;
+    lastCheckInAt?: Date | string | null;
   };
+  registration?: {
+    id: string;
+    primaryName: string;
+    mobileNumber: string;
+    place: string;
+    status: string;
+    totalMembers: number;
+    familyMembers: Array<{
+      id: string;
+      name: string;
+      relation: string;
+    }>;
+  } | null;
   checkIn?: {
     id: string;
     scannedAt: Date;
@@ -341,7 +356,7 @@ export async function validatePassTokenAction(eventId: string, token: string, sc
     };
   }
 
-  const cleanToken = token.trim();
+  let cleanToken = token.trim();
   if (!cleanToken) {
     return {
       success: false,
@@ -351,9 +366,24 @@ export async function validatePassTokenAction(eventId: string, token: string, sc
     };
   }
 
+  // Handle URL strings scanned directly (e.g. https://.../p/ek_123456 or /p/ek_123456)
+  const urlMatch = cleanToken.match(/\/p\/(ek_[a-zA-Z0-9]+)/);
+  if (urlMatch && urlMatch[1]) {
+    cleanToken = urlMatch[1];
+  }
+
   try {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (event?.status === "ON_HOLD") {
+    if (!event) {
+      return {
+        success: false,
+        status: "DENIED",
+        message: "Event not found",
+        rejectionReason: "Event ID invalid",
+      };
+    }
+
+    if (event.status === "ON_HOLD") {
       const checkIn = await prisma.checkIn.create({
         data: {
           eventId,
@@ -372,7 +402,7 @@ export async function validatePassTokenAction(eventId: string, token: string, sc
       };
     }
 
-    if (event?.status === "COMPLETED") {
+    if (event.status === "COMPLETED") {
       const checkIn = await prisma.checkIn.create({
         data: {
           eventId,
@@ -391,12 +421,42 @@ export async function validatePassTokenAction(eventId: string, token: string, sc
       };
     }
 
-    // Find pass
+    // Check if event has ended by date
+    const now = new Date();
+    if (event.endDate && now > new Date(event.endDate)) {
+      const checkIn = await prisma.checkIn.create({
+        data: {
+          eventId,
+          scannedToken: cleanToken,
+          status: "DENIED",
+          rejectionReason: `Event ended on ${new Date(event.endDate).toLocaleDateString("en-IN")}`,
+          scannedBy,
+        },
+      });
+      return {
+        success: false,
+        status: "DENIED",
+        message: "Entry Denied: Event has already ended",
+        rejectionReason: "Event Ended / Expired",
+        checkIn: { id: checkIn.id, scannedAt: checkIn.scannedAt },
+      };
+    }
+
+    // Find pass with its registered attendee & family group
     const pass = await prisma.pass.findUnique({
       where: { token: cleanToken },
+      include: {
+        registration: {
+          include: {
+            familyMembers: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+      },
     });
 
-    // Case 1: Pass does not exist
+    // Pass does not exist or belongs to different event
     if (!pass || pass.eventId !== eventId) {
       const checkIn = await prisma.checkIn.create({
         data: {
@@ -417,22 +477,15 @@ export async function validatePassTokenAction(eventId: string, token: string, sc
       };
     }
 
-    // Case 2: Pass already USED
-    if (pass.status === "USED") {
-      const previousApprovedCheckIn = await prisma.checkIn.findFirst({
-        where: { passId: pass.id, status: "APPROVED" },
-        orderBy: { scannedAt: "desc" },
-      });
-
-      const usedAtDate = previousApprovedCheckIn ? previousApprovedCheckIn.scannedAt : pass.updatedAt;
-
+    // Pass cancelled by admin
+    if (pass.status === "CANCELLED") {
       const checkIn = await prisma.checkIn.create({
         data: {
           eventId,
           passId: pass.id,
           scannedToken: cleanToken,
           status: "DENIED",
-          rejectionReason: "Pass has already been used",
+          rejectionReason: "Pass has been cancelled by administrator",
           scannedBy,
         },
       });
@@ -440,38 +493,8 @@ export async function validatePassTokenAction(eventId: string, token: string, sc
       return {
         success: false,
         status: "DENIED",
-        message: "Entry Denied: Pass Already Used",
-        rejectionReason: "Double Scan / Already Used",
-        pass: {
-          id: pass.id,
-          token: pass.token,
-          holderName: pass.holderName,
-          holderEmail: pass.holderEmail,
-          status: pass.status,
-          usedAt: usedAtDate,
-        },
-        checkIn: { id: checkIn.id, scannedAt: checkIn.scannedAt },
-      };
-    }
-
-    // Case 3: Pass EXPIRED or CANCELLED
-    if (pass.status !== "ACTIVE") {
-      const checkIn = await prisma.checkIn.create({
-        data: {
-          eventId,
-          passId: pass.id,
-          scannedToken: cleanToken,
-          status: "DENIED",
-          rejectionReason: `Pass is ${pass.status.toLowerCase()}`,
-          scannedBy,
-        },
-      });
-
-      return {
-        success: false,
-        status: "DENIED",
-        message: `Entry Denied: Pass is ${pass.status}`,
-        rejectionReason: `Status: ${pass.status}`,
+        message: "Entry Denied: Pass is Cancelled",
+        rejectionReason: "Pass Cancelled",
         pass: {
           id: pass.id,
           token: pass.token,
@@ -480,43 +503,94 @@ export async function validatePassTokenAction(eventId: string, token: string, sc
           status: pass.status,
           usedAt: pass.updatedAt,
         },
+        registration: pass.registration
+          ? {
+              id: pass.registration.id,
+              primaryName: pass.registration.primaryName,
+              mobileNumber: pass.registration.mobileNumber,
+              place: pass.registration.place,
+              status: pass.registration.status,
+              totalMembers: pass.registration.totalMembers,
+              familyMembers: pass.registration.familyMembers.map((m) => ({
+                id: m.id,
+                name: m.name,
+                relation: m.relation,
+              })),
+            }
+          : null,
         checkIn: { id: checkIn.id, scannedAt: checkIn.scannedAt },
       };
     }
 
-    // Case 4: ACTIVE -> ATOMIC TRANSACTION to APPROVED & mark USED
-    const [updatedPass, checkIn] = await prisma.$transaction([
-      prisma.pass.update({
+    // Passes are allowed up to end of the event!
+    // Fetch previous check-ins to display history & entry count
+    const previousApprovedCheckIns = await prisma.checkIn.findMany({
+      where: { passId: pass.id, status: "APPROVED" },
+      orderBy: { scannedAt: "desc" },
+      take: 5,
+    });
+
+    const previousCount = previousApprovedCheckIns.length;
+    const lastCheckIn = previousApprovedCheckIns[0];
+
+    // Record this approved check-in
+    const checkIn = await prisma.checkIn.create({
+      data: {
+        eventId,
+        passId: pass.id,
+        scannedToken: cleanToken,
+        status: "APPROVED",
+        scannedBy,
+      },
+    });
+
+    // Ensure pass status is ACTIVE so it remains valid
+    if (pass.status !== "ACTIVE") {
+      await prisma.pass.update({
         where: { id: pass.id },
-        data: { status: "USED" },
-      }),
-      prisma.checkIn.create({
-        data: {
-          eventId,
-          passId: pass.id,
-          scannedToken: cleanToken,
-          status: "APPROVED",
-          scannedBy,
-        },
-      }),
-    ]);
+        data: { status: "ACTIVE" },
+      });
+    }
 
     revalidatePath(`/events/${eventId}/scanner`);
     revalidatePath(`/events/${eventId}/check-ins`);
+    revalidatePath(`/events/${eventId}`);
     revalidatePath(`/p/${cleanToken}`);
+
+    const isRepeatCheckIn = previousCount > 0;
+    const message = isRepeatCheckIn
+      ? `Access Approved! Welcome back, ${pass.holderName} (Entry #${previousCount + 1})`
+      : `Access Approved! Welcome, ${pass.holderName}`;
 
     return {
       success: true,
       status: "APPROVED",
-      message: `Access Approved! Welcome, ${updatedPass.holderName}`,
+      message,
       pass: {
-        id: updatedPass.id,
-        token: updatedPass.token,
-        holderName: updatedPass.holderName,
-        holderEmail: updatedPass.holderEmail,
-        status: updatedPass.status,
+        id: pass.id,
+        token: pass.token,
+        holderName: pass.holderName,
+        holderEmail: pass.holderEmail,
+        status: "ACTIVE",
         usedAt: checkIn.scannedAt,
+        totalCheckIns: previousCount + 1,
+        lastCheckInAt: lastCheckIn ? lastCheckIn.scannedAt : null,
       },
+      registration: pass.registration
+        ? {
+            id: pass.registration.id,
+            primaryName: pass.registration.primaryName,
+            mobileNumber: pass.registration.mobileNumber,
+            place: pass.registration.place,
+            status: pass.registration.status,
+            totalMembers: pass.registration.totalMembers,
+            familyMembers: pass.registration.familyMembers.map((m) => ({
+              id: m.id,
+              name: m.name,
+              relation: m.relation,
+            })),
+          }
+        : null,
       checkIn: { id: checkIn.id, scannedAt: checkIn.scannedAt },
     };
   } catch (error: any) {

@@ -600,8 +600,8 @@ export async function getEventRegistrationsAction(eventId: string) {
           orderBy: { createdAt: "asc" },
           include: {
             checkIns: {
+              where: { status: "APPROVED" },
               orderBy: { scannedAt: "desc" },
-              take: 1,
             },
           },
         },
@@ -610,6 +610,12 @@ export async function getEventRegistrationsAction(eventId: string) {
 
     const totalRegistrations = registrations.length;
     const totalPeople = registrations.reduce((sum, r) => sum + r.totalMembers, 0);
+    const totalScans = registrations.reduce(
+      (sum, r) =>
+        sum +
+        r.passes.reduce((pSum, p) => pSum + (p.checkIns?.length || 0), 0),
+      0
+    );
 
     return {
       success: true,
@@ -617,6 +623,7 @@ export async function getEventRegistrationsAction(eventId: string) {
       stats: {
         totalRegistrations,
         totalPeople,
+        totalScans,
       },
     };
   } catch (error: any) {

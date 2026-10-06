@@ -56,6 +56,19 @@
   }
 
   --animate-shimmer: shimmer 8s infinite linear;
+
+  @keyframes scanner-beam {
+    0%, 100% {
+      top: 5%;
+      opacity: 0.6;
+    }
+    50% {
+      top: 92%;
+      opacity: 1;
+    }
+  }
+
+  --animate-scanner-beam: scanner-beam 2.2s ease-in-out infinite;
 }
 
 

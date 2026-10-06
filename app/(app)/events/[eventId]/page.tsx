@@ -133,26 +133,6 @@ export default async function EventDetailPage({ params }: EventPageProps) {
                 >
                   {timingBadge.label}
                 </span>
-
-                {isUnlimitedCapacity ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30">
-                    <InfinityIcon className="w-3.5 h-3.5" /> Unlimited Capacity
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-secondary text-secondary-foreground border border-border">
-                    Cap: {event.capacity}
-                  </span>
-                )}
-
-                {event.registrationEnabled ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/30">
-                    <Sparkles className="w-3 h-3" /> Registration Open
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border">
-                    Registration Closed
-                  </span>
-                )}
               </div>
 
               {/* Event Title & Description */}
@@ -441,6 +421,18 @@ export default async function EventDetailPage({ params }: EventPageProps) {
             </div>
           </div>
         )}
+
+        {/* ========================================================
+            5. REGISTERED ATTENDEES & FAMILY GROUPS
+            ======================================================== */}
+        <EventRegisteredAttendees
+          eventId={event.id}
+          event={event}
+          initialRegistrations={registrations}
+          stats={regRes.success && regRes.stats ? regRes.stats : undefined}
+          showViewAllLink={true}
+          title="Registered Attendees"
+        />
       </div>
 
       <MobileNav />

@@ -5,7 +5,7 @@ import { UserRole } from "@/lib/generated/prisma/enums";
 import { hasAnyRole } from "@/lib/auth/permissions";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, UserCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, UserCheck, Sparkles, Scan } from "lucide-react";
 import { RegistrationsClient } from "./components/registrations-client";
 import MobileNav from "@/components/tab/mobile-tab";
 
@@ -35,7 +35,7 @@ export default async function EventRegistrationsPage({ params }: RegistrationsPa
   const registrations = regRes.success ? regRes.registrations || [] : [];
   const stats = regRes.success && regRes.stats
     ? regRes.stats
-    : { totalRegistrations: registrations.length, totalPeople: registrations.length };
+    : { totalRegistrations: registrations.length, totalPeople: registrations.length, totalScans: 0 };
 
   return (
     <>
@@ -72,6 +72,14 @@ export default async function EventRegistrationsPage({ params }: RegistrationsPa
               </span>
               <span className="text-xl font-black text-pink-600 dark:text-pink-400">
                 {stats.totalPeople}
+              </span>
+            </div>
+            <div className="p-3 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-center">
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 block flex items-center justify-center gap-1">
+                <Scan className="w-3 h-3" /> Gate Scans
+              </span>
+              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                {stats.totalScans || 0}
               </span>
             </div>
           </div>
