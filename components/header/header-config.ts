@@ -28,15 +28,13 @@ export const headerRoutesConfig: HeaderRouteRule[] = [
   {
     pattern: "/dashboard",
     title: "dashboard.title",
-    showBack: false,
-    showMobileNav: true,
+    showBack: false
   },
   // Admin root
   {
     pattern: "/admin",
     title: "admin.title",
-    showBack: true,
-    showMobileNav: true,
+    showBack: true
   },
   // Admin User Add
   {
@@ -64,7 +62,6 @@ export const headerRoutesConfig: HeaderRouteRule[] = [
     pattern: "/settings",
     title: "settings.title",
     showBack: false,
-    showMobileNav: true,
   },
   // Settings Profile
   {
