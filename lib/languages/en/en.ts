@@ -8,6 +8,7 @@ export default {
     nav: {
         collapse: "Collapse",
         dashboard: "Dashboard",
+        events: "Events",
         admin: "Admin",
         settings: "Settings",
     },

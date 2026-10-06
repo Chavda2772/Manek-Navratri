@@ -419,7 +419,7 @@ export default function SignupPage() {
               className="text-5xl font-black tracking-tight leading-tight"
             >
               The future of <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/60">wealth management.</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/60">event access.</span>
             </motion.h2>
 
             <motion.p
@@ -428,7 +428,7 @@ export default function SignupPage() {
               transition={{ delay: 0.5 }}
               className="text-white/80 text-xl font-medium max-w-lg mx-auto leading-relaxed"
             >
-              Join thousands of professionals using {envClient.NEXT_PUBLIC_APP_NAME} to streamline their financial operations.
+              Join event organizers and attendees using {envClient.NEXT_PUBLIC_APP_NAME} to streamline ticketing and pass verification.
             </motion.p>
           </div>
         </div>

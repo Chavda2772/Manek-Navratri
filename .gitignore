@@ -44,3 +44,4 @@ next-env.d.ts
 /lib/generated/prisma
 resources/database/backup_db
 uploads/
+node_modules

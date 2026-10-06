@@ -312,7 +312,7 @@ export default function SetupPage() {
               transition={{ delay: 0.5 }}
               className="text-white/80 text-xl font-medium max-w-lg mx-auto leading-relaxed"
             >
-              You are just one step away from launching your private financial architect platform.
+              You are just one step away from launching your secure {envClient.NEXT_PUBLIC_APP_NAME} management platform.
             </motion.p>
           </div>
         </div>

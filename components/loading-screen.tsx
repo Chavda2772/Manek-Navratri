@@ -2,24 +2,25 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { Ticket, Sparkles } from "lucide-react";
 
 const MESSAGES = [
-    "Calculating your financial peace...",
-    "Organizing the chaos...",
-    "Polishing your balance sheet...",
-    "Settling the scores...",
-    "Securing your data with love...",
-    "Dreaming of debt-free days...",
-    "Syncing with the universe...",
-    "Building your financial future...",
-    "Counting the pennies...",
-    "Optimizing your workflow...",
-    "Preparing your dashboard...",
-    "Gathering insights...",
-    "Making things pretty...",
-    "Almost there...",
-    "Just a few more adjustments...",
-    "Loading the magic...",
+    "Preparing your event passes...",
+    "Generating secure QR access keys...",
+    "Encrypting digital pass tokens...",
+    "Syncing attendee verification log...",
+    "Polishing event details...",
+    "Optimizing pass scanner...",
+    "Validating entry permissions...",
+    "Securing event ticket data...",
+    "Organizing attendee roster...",
+    "Preparing VIP access control...",
+    "Setting up live scanner sync...",
+    "Connecting to EventKey network...",
+    "Configuring ticket pass tiers...",
+    "Verifying entry authorization...",
+    "Building your event dashboard...",
+    "Loading event magic...",
 ];
 
 export function LoadingScreen() {
@@ -61,38 +62,40 @@ export function LoadingScreen() {
             </div>
 
             <div className="relative flex flex-col items-center max-w-xs w-full px-6">
-                {/* Premium Spinner */}
-                <div className="relative w-24 h-24 mb-16 flex items-center justify-center">
+                {/* Premium EventKey Spinner */}
+                <div className="relative w-28 h-28 mb-12 flex items-center justify-center">
                     {/* Outer slow ring */}
                     <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-0 rounded-full border-2 border-primary/10 border-t-primary/40 border-l-primary/40"
+                        className="absolute inset-0 rounded-full border-2 border-primary/10 border-t-primary/50 border-l-primary/50"
                     />
 
                     {/* Middle reverse ring */}
                     <motion.div
                         animate={{ rotate: -360 }}
                         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-2 rounded-full border-2 border-dashed border-primary/20"
+                        className="absolute inset-2.5 rounded-full border-2 border-dashed border-primary/25"
                     />
 
                     {/* Inner fast ring */}
                     <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-4 rounded-full border-t-2 border-primary shadow-[0_0_15px_rgba(var(--primary),0.5)]"
+                        transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-5 rounded-full border-t-2 border-r-2 border-primary shadow-[0_0_15px_rgba(var(--primary),0.5)]"
                     />
 
-                    {/* Center pulsing core */}
+                    {/* Center pulsing core with Ticket icon */}
                     <motion.div
                         animate={{
-                            scale: [1, 1.2, 1],
-                            opacity: [0.5, 1, 0.5]
+                            scale: [0.95, 1.1, 0.95],
+                            opacity: [0.8, 1, 0.8]
                         }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        className="w-4 h-4 bg-primary rounded-full shadow-[0_0_20px_var(--primary)]"
-                    />
+                        className="w-10 h-10 bg-primary/15 border border-primary/40 rounded-xl flex items-center justify-center shadow-[0_0_20px_var(--primary)] backdrop-blur-xs"
+                    >
+                        <Ticket className="w-5 h-5 text-primary animate-pulse" />
+                    </motion.div>
 
                     {/* Orbiting particles */}
                     {[0, 120, 240].map((angle, i) => (
@@ -105,7 +108,7 @@ export function LoadingScreen() {
                             <motion.div
                                 animate={{ scale: [1, 1.5, 1] }}
                                 transition={{ duration: 1, repeat: Infinity }}
-                                className="w-1.5 h-1.5 bg-primary/40 rounded-full absolute top-0 left-1/2 -translate-x-1/2"
+                                className="w-1.5 h-1.5 bg-primary/60 rounded-full absolute top-0 left-1/2 -translate-x-1/2 shadow-[0_0_8px_var(--primary)]"
                             />
                         </motion.div>
                     ))}

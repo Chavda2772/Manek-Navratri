@@ -159,7 +159,7 @@ function ErrorContent() {
               className="text-[clamp(2rem,5vw,3.5rem)] font-black tracking-tight leading-tight"
             >
               Excellence in <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/60">Digital Finance.</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/60">Event Security.</span>
             </motion.h2>
 
             <motion.p
@@ -168,7 +168,7 @@ function ErrorContent() {
               transition={{ delay: 0.5 }}
               className="text-white/80 text-xl font-medium max-w-lg mx-auto leading-relaxed"
             >
-              Our infrastructure is built for ultimate resilience, ensuring your data stays protected and accessible.
+              Our infrastructure is built for high-scale event verification, ensuring your passes and access keys stay protected and instant.
             </motion.p>
           </div>
         </div>

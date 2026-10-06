@@ -360,8 +360,8 @@ function LoginFormContent({ providers }: LoginFormProps) {
               transition={{ delay: 0.3 }}
               className="text-[clamp(2rem,5vw,3.5rem)] font-black tracking-tight leading-tight"
             >
-              Master your <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/60">financial destiny.</span>
+              Seamless Event <br />
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-white to-white/60">Access & Ticketing.</span>
             </motion.h2>
 
             <motion.p
@@ -370,7 +370,7 @@ function LoginFormContent({ providers }: LoginFormProps) {
               transition={{ delay: 0.5 }}
               className="text-white/80 text-xl font-medium max-w-lg mx-auto leading-relaxed"
             >
-              Experience the next generation of finance management with real-time insights and enterprise security.
+              Experience the next generation of event access control, digital passes, and real-time scanner management with {envClient.NEXT_PUBLIC_APP_NAME}.
             </motion.p>
           </div>
         </div>

@@ -27,8 +27,8 @@
 
 # Docker Release
 `sh ./resources/scripts/docker-release.sh <version> [env_file]`
-`Example: sh ./resources/scripts/docker-release.sh 4.0.8`
-`Example with custom env file: sh ./resources/scripts/docker-release.sh 4.0.8 .env.production`
+`Example: sh ./resources/scripts/docker-release.sh 0.0.2`
+`Example with custom env file: sh ./resources/scripts/docker-release.sh 0.0.2 .env.production`
 
 
 # ------

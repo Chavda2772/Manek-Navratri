@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -71,6 +70,7 @@ model User {
   passkeys      Passkey[]
   userSettings  UserSettings?
   userDocuments UserDocument[]
+  createdPasses Pass[]
 
   username        String?
   displayUsername String?
@@ -112,6 +112,7 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  issuer                String?
 
   @@index([userId])
   @@map("account")
@@ -209,4 +210,80 @@ model UserDocument {
 
   @@index([userId])
   @@map("userDocument")
+}
+
+// EventKey Domain Models
+
+enum PassStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+enum CheckInStatus {
+  APPROVED
+  DENIED
+}
+
+enum EventStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String?     @db.Text
+  location    String?
+  startDate   DateTime
+  endDate     DateTime
+  capacity    Int         @default(100)
+  status      EventStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  passes   Pass[]
+  checkIns CheckIn[]
+
+  @@map("event")
+}
+
+model Pass {
+  id          String     @id @default(cuid())
+  eventId     String
+  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  token       String     @unique
+  holderName  String
+  holderEmail String
+  status      PassStatus @default(ACTIVE)
+  createdBy   String
+  creator     User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  checkIns CheckIn[]
+
+  @@index([eventId])
+  @@index([token])
+  @@index([createdBy])
+  @@map("pass")
+}
+
+model CheckIn {
+  id              String        @id @default(cuid())
+  eventId         String
+  event           Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  passId          String?
+  pass            Pass?         @relation(fields: [passId], references: [id], onDelete: SetNull)
+  scannedToken    String
+  status          CheckInStatus
+  rejectionReason String?
+  scannedAt       DateTime      @default(now())
+  scannedBy       String?
+
+  @@index([eventId])
+  @@index([passId])
+  @@map("checkIn")
 }

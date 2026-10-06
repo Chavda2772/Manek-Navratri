@@ -5,13 +5,13 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_DB: next_template
+      POSTGRES_DB: event_key
       POSTGRES_USER: next_user
       POSTGRES_PASSWORD: next_pass
     networks:
       - prisma-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U next_user -d next_template" ]
+      test: [ "CMD-SHELL", "pg_isready -U next_user -d event_key" ]
       interval: 5s
       timeout: 2s
       retries: 20
@@ -41,7 +41,7 @@ services:
       BETTER_AUTH_TRUSTED_ORIGINS: "https://example.com,https://*.example.com"
 
       # DATABASE
-      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
+      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/event_key?schema=public"
 
       # Email Service
       SMTP_HOST: "mail.example.com"
@@ -73,7 +73,7 @@ services:
     ports:
       - "5555:5555"
     environment:
-      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
+      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/event_key?schema=public"
       STUDIO_PORT: 5555
       STUDIO_HOST: "0.0.0.0"
       STUDIO_BROWSER: "none"

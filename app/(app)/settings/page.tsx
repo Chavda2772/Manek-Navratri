@@ -83,183 +83,184 @@ export default function SettingsPage() {
 
 
   return (
-    <div className="min-h-screen bg-background pb-34">
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="mx-auto max-w-4xl mt-6 space-y-8 px-6"
-      >
-        {/* USER */}
+    <>
+      <div className="min-h-screen bg-background pb-34">
         <motion.div
-          variants={itemVariants}
-          onClick={() => { router.push("/settings/profile") }}
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
-          className="flex items-center gap-4 p-5 rounded-3xl bg-card border shadow-sm cursor-pointer transition-shadow hover:shadow-md"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="mx-auto max-w-4xl mt-6 space-y-8 px-6"
         >
-          <div className="relative group">
-            <Avatar className="h-16 w-16 ring-4 ring-background transition-transform duration-500 group-hover:scale-110">
-              <AvatarImage
-                src={getFileUrl(session?.user?.image)}
-                alt={session?.user?.name ?? "User avatar"}
-              />
-              <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">
-                {getInitials(session?.user?.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
-          </div>
-
-          <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-black text-xl tracking-tight">{session?.user?.name ?? "Unknown"}</p>
-              {session?.user?.username && (
-                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  @{session.user.username}
-                </span>
-              )}
+          {/* USER */}
+          <motion.div
+            variants={itemVariants}
+            onClick={() => { router.push("/settings/profile") }}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-4 p-5 rounded-3xl bg-card border shadow-sm cursor-pointer transition-shadow hover:shadow-md"
+          >
+            <div className="relative group">
+              <Avatar className="h-16 w-16 ring-4 ring-background transition-transform duration-500 group-hover:scale-110">
+                <AvatarImage
+                  src={getFileUrl(session?.user?.image)}
+                  alt={session?.user?.name ?? "User avatar"}
+                />
+                <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">
+                  {getInitials(session?.user?.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
             </div>
-            <p className="text-sm font-medium text-muted-foreground opacity-70">{session?.user?.email ?? "Unknown"}</p>
-          </div>
-          <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
-            <ChevronRight className="text-muted-foreground" size={20} />
-          </div>
-        </motion.div>
 
-        {/* GENERAL */}
-        <motion.div variants={itemVariants}>
-          <Section title={tran("settings.general")}>
-            {/* Currency */}
-            <Row icon={IndianRupee} label={tran("settings.currency")}>
-              <Select
-                items={currencyItems}
-                value={currency}
-                onValueChange={(value) => {
-                  if (!value) return
-                  const v = value as Currency
-                  setCurrency(v)
-                  updateConfig({ currency: v })
-                  void upsertSettingsMutation.mutateAsync({ currency: v })
-                  toast.success(tran("settings.msg.currency_updated"))
-                }}
-              >
-                <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl shadow-2xl">
-                  {Object.values(Currency).map((currency) => (
-                    <SelectItem key={currency} value={currency} className="rounded-lg font-medium">
-                      {currencyItems[currency]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Row>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-black text-xl tracking-tight">{session?.user?.name ?? "Unknown"}</p>
+                {session?.user?.username && (
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    @{session.user.username}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-medium text-muted-foreground opacity-70">{session?.user?.email ?? "Unknown"}</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+              <ChevronRight className="text-muted-foreground" size={20} />
+            </div>
+          </motion.div>
 
-            {/* Locale */}
-            <Row icon={Globe} label={tran("settings.locale")}>
-              <Select
-                items={localeItems}
-                value={locale}
-                onValueChange={(value) => {
-                  if (!value) return
-                  const v = value as string
-                  setLocale(v)
-                  updateConfig({ locale: v })
-                  void upsertSettingsMutation.mutateAsync({ locale: v })
-                  toast.success(tran("settings.msg.locale_updated"))
-                }}
-              >
-                <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl shadow-2xl">
-                  {Object.entries(localeItems).map(([key, value]) => (
-                    <SelectItem key={key} value={key} className="rounded-lg font-medium">
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Row>
+          {/* GENERAL */}
+          <motion.div variants={itemVariants}>
+            <Section title={tran("settings.general")}>
+              {/* Currency */}
+              <Row icon={IndianRupee} label={tran("settings.currency")}>
+                <Select
+                  items={currencyItems}
+                  value={currency}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    const v = value as Currency
+                    setCurrency(v)
+                    updateConfig({ currency: v })
+                    void upsertSettingsMutation.mutateAsync({ currency: v })
+                    toast.success(tran("settings.msg.currency_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {Object.values(Currency).map((currency) => (
+                      <SelectItem key={currency} value={currency} className="rounded-lg font-medium">
+                        {currencyItems[currency]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
 
-            <Row icon={Calendar} label={tran("settings.date_format")}>
-              <Select
-                items={dateFormatItems}
-                value={dateFormat}
-                onValueChange={(value) => {
-                  if (!value) return
-                  setDateFormat(value)
-                  updateConfig({ dateFormat: value })
-                  void upsertSettingsMutation.mutateAsync({ dateFormat: value })
-                  toast.success(tran("settings.msg.date_format_updated"))
-                }}
-              >
-                <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl shadow-2xl">
-                  {dateFormatItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Row>
+              {/* Locale */}
+              <Row icon={Globe} label={tran("settings.locale")}>
+                <Select
+                  items={localeItems}
+                  value={locale}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    const v = value as string
+                    setLocale(v)
+                    updateConfig({ locale: v })
+                    void upsertSettingsMutation.mutateAsync({ locale: v })
+                    toast.success(tran("settings.msg.locale_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {Object.entries(localeItems).map(([key, value]) => (
+                      <SelectItem key={key} value={key} className="rounded-lg font-medium">
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
 
-            <Row icon={Clock} label={tran("settings.time_format")}>
-              <Select
-                items={timeFormatItems}
-                value={timeFormat}
-                onValueChange={(value) => {
-                  if (!value) return
-                  setTimeFormat(value)
-                  updateConfig({ timeFormat: value })
-                  void upsertSettingsMutation.mutateAsync({ timeFormat: value })
-                  toast.success(tran("settings.msg.time_format_updated"))
-                }}
-              >
-                <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl shadow-2xl">
-                  {timeFormatItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Row>
+              <Row icon={Calendar} label={tran("settings.date_format")}>
+                <Select
+                  items={dateFormatItems}
+                  value={dateFormat}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    setDateFormat(value)
+                    updateConfig({ dateFormat: value })
+                    void upsertSettingsMutation.mutateAsync({ dateFormat: value })
+                    toast.success(tran("settings.msg.date_format_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {dateFormatItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
 
-            <Row icon={Languages} label={tran("settings.language")}>
-              <Select
-                items={languageItems}
-                value={language}
-                onValueChange={(value) => {
-                  if (!value) return
-                  setLanguage(value)
-                  updateConfig({ language: value })
-                  void upsertSettingsMutation.mutateAsync({ language: value })
-                  toast.success(tran("settings.msg.language_updated"))
-                }}
-              >
-                <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl shadow-2xl">
-                  {languageItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Row>
+              <Row icon={Clock} label={tran("settings.time_format")}>
+                <Select
+                  items={timeFormatItems}
+                  value={timeFormat}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    setTimeFormat(value)
+                    updateConfig({ timeFormat: value })
+                    void upsertSettingsMutation.mutateAsync({ timeFormat: value })
+                    toast.success(tran("settings.msg.time_format_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {timeFormatItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
 
-            {isDebug && (
+              <Row icon={Languages} label={tran("settings.language")}>
+                <Select
+                  items={languageItems}
+                  value={language}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    setLanguage(value)
+                    updateConfig({ language: value })
+                    void upsertSettingsMutation.mutateAsync({ language: value })
+                    toast.success(tran("settings.msg.language_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-45 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {languageItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
+
+              {isDebug && (
               <Row icon={Terminal} label={tran("settings.developer_mode")}>
                 <Button
                   variant={isDevMode ? "default" : "outline"}
@@ -268,101 +269,253 @@ export default function SettingsPage() {
                     "rounded-xl font-bold px-6",
                     isDevMode && "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                   )}
-                  onClick={() => {
-                    const newValue = !isDevMode;
-                    setIsDevMode(newValue);
-                    localStorage.setItem("dev_mode", String(newValue));
-                    toast.success(tran(newValue ? "settings.msg.dev_mode_enabled" : "settings.msg.dev_mode_disabled"));
+                </div>
+                <p className="text-sm font-medium text-muted-foreground opacity-70">{session?.user?.email ?? "Unknown"}</p>
+              </div>
+            <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+              <ChevronRight className="text-muted-foreground" size={20} />
+            </div>
+          </motion.div>
+
+          {/* GENERAL */}
+          <motion.div variants={itemVariants}>
+            <Section title={tran("settings.general")}>
+              {/* Currency */}
+              <Row icon={IndianRupee} label={tran("settings.currency")}>
+                <Select
+                  items={currencyItems}
+                  value={currency}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    const v = value as Currency
+                    setCurrency(v)
+                    updateConfig({ currency: v })
+                    void upsertSettingsMutation.mutateAsync({ currency: v })
+                    toast.success(tran("settings.msg.currency_updated"))
                   }}
                 >
-                  {isDevMode ? "ON" : "OFF"}
-                </Button>
+                  <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {Object.values(Currency).map((currency) => (
+                      <SelectItem key={currency} value={currency} className="rounded-lg font-medium">
+                        {currencyItems[currency]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Row>
-            )}
-          </Section>
-        </motion.div>
 
-        {/* APPEARANCE */}
-        <motion.div variants={itemVariants}>
-          <Section title={tran("settings.appearance")}>
-            <Row icon={PaintbrushIcon} label={tran("settings.theme_mode")}>
-              <div className="flex gap-1 bg-muted/50 rounded-2xl p-1.5 border-2 focus-within:border-primary/10">
-                {[
-                  { id: ThemeMode.AUTO, icon: Laptop, label: tran("settings.auto") },
-                  { id: ThemeMode.LIGHT, icon: Sun, label: tran("settings.light") },
-                  { id: ThemeMode.DARK, icon: Moon, label: tran("settings.dark") },
-                ].map((mode) => (
+              {/* Locale */}
+              <Row icon={Globe} label={tran("settings.locale")}>
+                <Select
+                  items={localeItems}
+                  value={locale}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    const v = value as string
+                    setLocale(v)
+                    updateConfig({ locale: v })
+                    void upsertSettingsMutation.mutateAsync({ locale: v })
+                    toast.success(tran("settings.msg.locale_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {Object.entries(localeItems).map(([key, value]) => (
+                      <SelectItem key={key} value={key} className="rounded-lg font-medium">
+                        {value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
+
+              <Row icon={Calendar} label={tran("settings.date_format")}>
+                <Select
+                  items={dateFormatItems}
+                  value={dateFormat}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    setDateFormat(value)
+                    updateConfig({ dateFormat: value })
+                    void upsertSettingsMutation.mutateAsync({ dateFormat: value })
+                    toast.success(tran("settings.msg.date_format_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {dateFormatItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
+
+              <Row icon={Clock} label={tran("settings.time_format")}>
+                <Select
+                  items={timeFormatItems}
+                  value={timeFormat}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    setTimeFormat(value)
+                    updateConfig({ timeFormat: value })
+                    void upsertSettingsMutation.mutateAsync({ timeFormat: value })
+                    toast.success(tran("settings.msg.time_format_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {timeFormatItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
+
+              <Row icon={Languages} label={tran("settings.language")}>
+                <Select
+                  items={languageItems}
+                  value={language}
+                  onValueChange={(value) => {
+                    if (!value) return
+                    setLanguage(value)
+                    updateConfig({ language: value })
+                    void upsertSettingsMutation.mutateAsync({ language: value })
+                    toast.success(tran("settings.msg.language_updated"))
+                  }}
+                >
+                  <SelectTrigger className="w-35 h-10 rounded-xl border-2 font-bold focus:ring-primary/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl shadow-2xl">
+                    {languageItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value} className="rounded-lg font-medium">
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Row>
+
+              {isDebug && (
+                <Row icon={Terminal} label={tran("settings.developer_mode")}>
                   <Button
-                    key={mode.id}
-                    variant={theme === mode.id ? "secondary" : "ghost"}
+                    variant={isDevMode ? "default" : "outline"}
                     size="sm"
                     className={cn(
-                      "gap-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all px-4 h-9",
-                      theme === mode.id && "bg-background shadow-lg scale-100 text-primary",
-                      theme !== mode.id && "opacity-60 hover:opacity-100"
+                      "rounded-xl font-bold px-6",
+                      isDevMode && "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                     )}
-                    onClick={async () => {
-                      setTheme(mode.id);
-                      updateConfig({ theme: mode.id });
-                      await upsertSettingsMutation.mutateAsync({ theme: mode.id });
+                    onClick={() => {
+                      const newValue = !isDevMode;
+                      setIsDevMode(newValue);
+                      localStorage.setItem("dev_mode", String(newValue));
+                      toast.success(tran(newValue ? "settings.msg.dev_mode_enabled" : "settings.msg.dev_mode_disabled"));
                     }}
                   >
-                    <mode.icon size={15} />
-                    <span className="hidden sm:inline">{mode.label}</span>
+                    {isDevMode ? "ON" : "OFF"}
                   </Button>
-                ))}
-              </div>
-            </Row>
-          </Section>
-        </motion.div>
+                </Row>
+              )}
+            </Section>
+          </motion.div>
 
-        {/* SECURITY */}
-        <motion.div variants={itemVariants}>
-          <Section title={tran("settings.security_privacy")}>
-            <Row
-              icon={Link2Icon}
-              label={tran("settings.linked_accounts")}
-              href="/settings/link-account"
-            />
-            <Row
-              icon={LockKeyhole}
-              label={tran("settings.safety_security")}
-              href="/settings/security"
-            />
-            <Row
-              icon={KeyRoundIcon}
-              label={tran("settings.active_sessions")}
-              href="/settings/session-management"
-            />
-            <Row
-              icon={Skull}
-              label={tran("settings.danger_zone")}
-              labelClassName="text-rose-600"
-              iconContainerClassName="bg-rose-100 text-rose-600"
-              href="/settings/danger"
-            />
-          </Section>
-        </motion.div>
+          {/* APPEARANCE */}
+          <motion.div variants={itemVariants}>
+            <Section title={tran("settings.appearance")}>
+              <Row icon={PaintbrushIcon} label={tran("settings.theme_mode")}>
+                <div className="flex gap-1 bg-muted/50 rounded-2xl p-1.5 border-2 focus-within:border-primary/10">
+                  {[
+                    { id: ThemeMode.AUTO, icon: Laptop, label: tran("settings.auto") },
+                    { id: ThemeMode.LIGHT, icon: Sun, label: tran("settings.light") },
+                    { id: ThemeMode.DARK, icon: Moon, label: tran("settings.dark") },
+                  ].map((mode) => (
+                    <Button
+                      key={mode.id}
+                      variant={theme === mode.id ? "secondary" : "ghost"}
+                      size="sm"
+                      className={cn(
+                        "gap-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all px-4 h-9",
+                        theme === mode.id && "bg-background shadow-lg scale-100 text-primary",
+                        theme !== mode.id && "opacity-60 hover:opacity-100"
+                      )}
+                      onClick={async () => {
+                        setTheme(mode.id);
+                        updateConfig({ theme: mode.id });
+                        await upsertSettingsMutation.mutateAsync({ theme: mode.id });
+                      }}
+                    >
+                      <mode.icon size={15} />
+                      <span className="hidden sm:inline">{mode.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </Row>
+            </Section>
+          </motion.div>
 
-        <FooterButtons>
-          <Button onClick={handleLogout} variant="destructive" className="h-14 w-14 md:w-auto md:px-12 rounded-full md:gap-3 font-semibold uppercase bg-rose-500 hover:bg-rose-500/70 text-white shadow-lg shadow-rose-500/50 transition-all hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 p-0 md:py-2">
-            <LogOut className="size-5 md:size-6" />
-            <span className="hidden md:block text-center font-black tracking-[0.2em] text-sm">
-              {tran("settings.logout")}
-            </span>
-          </Button>
-        </FooterButtons>
+          {/* SECURITY */}
+          <motion.div variants={itemVariants}>
+            <Section title={tran("settings.security_privacy")}>
+              <Row
+                icon={Link2Icon}
+                label={tran("settings.linked_accounts")}
+                href="/settings/link-account"
+              />
+              <Row
+                icon={LockKeyhole}
+                label={tran("settings.safety_security")}
+                href="/settings/security"
+              />
+              <Row
+                icon={KeyRoundIcon}
+                label={tran("settings.active_sessions")}
+                href="/settings/session-management"
+              />
+              <Row
+                icon={Skull}
+                label={tran("settings.danger_zone")}
+                labelClassName="text-rose-600"
+                iconContainerClassName="bg-rose-100 text-rose-600"
+                href="/settings/danger"
+              />
+            </Section>
+          </motion.div>
 
-        {/* App Version */}
-        <motion.div
-          variants={itemVariants}
-          className="text-center space-y-2 opacity-50 pt-4"
-        >
-          <p className="text-[10px] font-black uppercase tracking-[0.3em]">Build Version {version}</p>
-          <p className="text-[9px] font-medium italic">© {new Date().getFullYear()} {envClient.NEXT_PUBLIC_APP_NAME}. All rights reserved.</p>
+          <FooterButtons bottomSpace={true}>
+            <Button onClick={handleLogout} variant="destructive" className="h-14 w-14 md:w-auto md:px-12 rounded-full md:gap-3 font-semibold uppercase bg-rose-500 hover:bg-rose-500/70 text-white shadow-lg shadow-rose-500/50 transition-all hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 p-0 md:py-2">
+              <LogOut className="size-5 md:size-6" />
+              <span className="hidden md:block text-center font-black tracking-[0.2em] text-sm">
+                {tran("settings.logout")}
+              </span>
+            </Button>
+          </FooterButtons>
+
+          {/* App Version */}
+          <motion.div
+            variants={itemVariants}
+            className="text-center space-y-2 opacity-50 pt-4"
+          >
+            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Build Version {version}</p>
+            <p className="text-[9px] font-medium italic">© {new Date().getFullYear()} {envClient.NEXT_PUBLIC_APP_NAME}. All rights reserved.</p>
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </div >
+      </div>
+
+      <MobileNav />
+    </>
   );
 }
 
@@ -370,6 +523,7 @@ import { FooterButtons } from "@/components/footer-buttons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { containerVariants, itemVariants } from "@/lib/animations";
 import { currencyItems, dateFormatItems, languageItems, localeItems, timeFormatItems } from "@/lib/constants/common";
+import MobileNav from "@/components/tab/mobile-tab";
 
 function SettingsSkeleton() {
   return (

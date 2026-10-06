@@ -1,6 +1,6 @@
 {
-  "name": "next-template",
-  "version": "0.0.1",
+  "name": "eventkey",
+  "version": "0.0.2",
   "private": true,
   "engines": {
     "node": ">=22"
@@ -35,6 +35,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "html-to-image": "^1.11.13",
+    "html5-qrcode": "^2.3.8",
     "dotenv": "^18.0.5",
     "framer-motion": "^13.4.6",
     "lucide-react": "^1.49.0",
@@ -48,6 +50,7 @@
     "react-dom": "^19.3.0",
     "react-hook-form": "^7.89.0",
     "react-qr-code": "^2.2.0",
+    "recharts": "^3.10.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.5"

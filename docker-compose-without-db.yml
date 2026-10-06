@@ -1,6 +1,6 @@
 services:
   app:
-    image: chavda2772/next-template:latest
+    image: chavda2772/event-key:latest
     container_name: app
     environment:
       # Application
@@ -15,7 +15,7 @@ services:
       BETTER_AUTH_TRUSTED_ORIGINS: "https://example.com,https://*.example.com"
 
       # DATABASE
-      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
+      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/event_key?schema=public"
 
       # Email Service
       SMTP_HOST: "mail.example.com"
@@ -44,7 +44,7 @@ services:
     ports:
       - "5555:5555"
     environment:
-      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/next_template?schema=public"
+      DATABASE_URL: "postgresql://next_user:next_pass@postgres_db:5432/event_key?schema=public"
       STUDIO_PORT: 5555
       STUDIO_HOST: "0.0.0.0"
       STUDIO_BROWSER: "none"
