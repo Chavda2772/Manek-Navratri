@@ -158,19 +158,24 @@ function AppHeaderContent({ standaloneProps }: { standaloneProps?: AppHeaderProp
                         pathname === item.href ||
                         pathname?.startsWith(`${item.href}/`);
                       return (
-                        <Link
+                        <SheetClose
                           key={item.href}
-                          href={item.href as any}
-                          className={clsx(
-                            "group flex items-center gap-4 rounded-xl px-4 py-3 font-semibold transition-all duration-200",
-                            active
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg shadow-indigo-500/10"
-                              : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                          )}
-                        >
-                          <span>{item.icon}</span>
-                          <span className="text-sm tracking-wide">{item.label}</span>
-                        </Link>
+                          render={
+                            <Link
+                              key={item.href}
+                              href={item.href as any}
+                              className={clsx(
+                                "group flex items-center gap-4 rounded-xl px-4 py-3 font-semibold transition-all duration-200",
+                                active
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg shadow-indigo-500/10"
+                                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                              )}
+                            >
+                              <span>{item.icon}</span>
+                              <span className="text-sm tracking-wide">{item.label}</span>
+                            </Link>
+                          }
+                        />
                       );
                     })}
                   </nav>
