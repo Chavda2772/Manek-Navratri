@@ -1,1 +1,0 @@
-# Manek-Navratri
