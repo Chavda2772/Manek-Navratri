@@ -65,11 +65,11 @@ export function MobileStepClient({ registrationId, event }: MobileStepClientProp
       }
 
       if (res.debugOtp) {
-        toast.success(`OTP Sent! Test Code: ${res.debugOtp}`, {
+        toast.success(`OTP Sent to WhatsApp! Test Code: ${res.debugOtp}`, {
           duration: 10000,
         });
       } else {
-        toast.success(res.message || "Verification code sent to your phone!");
+        toast.success(res.message || "Verification code sent to your WhatsApp!");
       }
 
       // Redirect to OTP verification page
@@ -107,7 +107,7 @@ export function MobileStepClient({ registrationId, event }: MobileStepClientProp
           Enter Mobile Number
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Enter your 10-digit mobile number to register or access your existing pass. An OTP code will be sent to verify your identity.
+          Enter your 10-digit mobile number to register or access your existing pass. An OTP code will be sent to your WhatsApp to verify your identity.
         </p>
       </div>
 

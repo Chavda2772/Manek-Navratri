@@ -6,6 +6,10 @@ const envSchema = zod.object({
   NEXT_PUBLIC_APP_NAME: zod.string().nonempty(),
   NEXT_PUBLIC_APP_DESCRIPTION: zod.string().nonempty(),
   ADVANCE_PASS_CHECK: zod.string().optional(),
+  API_BASE_URL: zod.string().optional(),
+  WAHA_BASE_URL: zod.string().optional(),
+  WAHA_API_KEY: zod.string().optional(),
+  WAHA_SESSION: zod.string().optional(),
 
   //  Database
   DATABASE_URL: zod.string().nonempty(),

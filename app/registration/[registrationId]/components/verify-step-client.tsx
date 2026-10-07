@@ -350,7 +350,7 @@ export function VerifyStepClient({
         </h2>
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
           <p className="text-sm text-muted-foreground">
-            Enter the 6-digit verification code sent to
+            Enter the 6-digit verification code sent to your WhatsApp
           </p>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-muted/80 border border-border/80 text-foreground font-mono font-bold text-xs">
             <Phone className="w-3.5 h-3.5 text-pink-500" />

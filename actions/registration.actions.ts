@@ -20,6 +20,7 @@ import {
   createRegistrationSession,
   getRegistrationSession,
 } from "@/lib/registration/session";
+import { sendOtp } from "@/lib/otp-service";
 
 const MAX_OTP_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
@@ -345,10 +346,21 @@ export async function sendRegistrationOtpAction(input: {
       console.log(`\n========================================\n[EVENT REGISTRATION OTP]\nEvent: ${event.title}\nMobile: +91 ${cleanedMobile}\nOTP: ${otp}\n========================================\n`);
     }
 
+    // Send OTP via external OTP service
+    const otpResult = await sendOtp(cleanedMobile, otp);
+
+    if (!otpResult.success) {
+      console.error("sendRegistrationOtpAction sendOtp error:", otpResult.error);
+      return {
+        success: false,
+        error: otpResult.error || "Failed to deliver OTP. Please try again.",
+      };
+    }
+
     // Provide OTP in response during development or testing
     return {
       success: true,
-      message: `OTP sent to +91 ${cleanedMobile}`,
+      message: `OTP sent to your WhatsApp (+91 ${cleanedMobile})`,
       mobileNumber: cleanedMobile,
       debugOtp: process.env.NODE_ENV !== "production" ? otp : undefined,
     };
@@ -666,10 +678,7 @@ export async function getRegistrationOtpStatusAction(input: {
 
     let lockoutMinutes = 0;
     if (isLocked && attemptsRecord) {
-      lockoutMinutes = Math.max(
-        1,
-        Math.ceil((attemptsRecord.expiresAt.getTime() - Date.now()) / (60 * 1000))
-      );
+      lockoutMinutes = Math.max(1, Math.ceil((attemptsRecord.expiresAt.getTime() - Date.now()) / (60 * 1000)));
     }
 
     let secondsUntilResend = 0;
