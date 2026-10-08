@@ -1,34 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { getActiveRegistrationLinkAction } from "@/actions/registration.actions";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Calendar,
-  Clock,
-  MapPin,
-  Navigation,
-  Music,
-  Sparkles,
+  ArrowRight,
   Award,
-  ShieldCheck,
-  ExternalLink,
+  Calendar,
+  Check,
   ChevronRight,
-  Menu,
-  X,
-  Star,
+  Clock,
+  Compass,
+  Copy,
+  ExternalLink,
   Flame,
+  Globe,
+  Info,
+  MapPin,
+  Menu,
+  Music,
+  Navigation,
+  ShieldCheck,
+  Sparkles,
+  Star,
   Ticket,
   Users,
   Volume2,
-  ArrowRight,
-  Copy,
-  Check,
-  Compass,
-  Info,
+  X,
 } from "lucide-react";
-import { getActiveRegistrationLinkAction } from "@/actions/registration.actions";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 // Target Event Date: October 11, 2026 at 9:00 PM (21:00) IST
 const EVENT_TARGET_DATE = new Date("2026-10-11T21:00:00+05:30").getTime();
@@ -36,10 +37,91 @@ const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/WjA94KiergA8LHVs5";
 const LATITUDE = 22.245078904784286;
 const LONGITUDE = 68.95867353330141;
 
+// Official Website & Domain
+const SITE_DOMAIN = "ManekNavratri.com";
+const SITE_URL = "https://maneknavratri.com";
+
 // Official Social & Channel Links
 const MLA_INSTAGRAM_URL = "https://www.instagram.com/pabubhavmanek";
 const MLA_SON_INSTAGRAM_URL = "https://www.instagram.com/sahadevmanek/";
 const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VbDMEYnKrWQpfJHM753m";
+
+// Sacred Shiv Trishul Emblem (Main Sponsor is Shiv Bhakt)
+function ShivTrishulLogo({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg
+      className="w-6 h-6"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="shivTrishulGold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFF7D6" />
+          <stop offset="35%" stopColor="#FFD700" />
+          <stop offset="70%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#B45309" />
+        </linearGradient>
+      </defs>
+
+      {/* Center Trident Spear Prong */}
+      <path
+        d="M24 2.5 L26.8 11.5 C26.8 15.5 25.4 18.5 24 20.5 C22.6 18.5 21.2 15.5 21.2 11.5 Z"
+        fill="url(#shivTrishulGold)"
+      />
+
+      {/* Left Outer Curved Trishul Blade */}
+      <path
+        d="M24 19.5 C20 19 13.5 17.5 11.5 11.5 C10.8 9.2 11.2 5.8 12.2 4.2 C12.4 6.5 13.8 9.5 16.5 11.2 C19 12.8 21.8 13.8 24 14.2 Z"
+        fill="url(#shivTrishulGold)"
+      />
+
+      {/* Right Outer Curved Trishul Blade */}
+      <path
+        d="M24 19.5 C28 19 34.5 17.5 36.5 11.5 C37.2 9.2 36.8 5.8 35.8 4.2 C35.6 6.5 34.2 9.5 31.5 11.2 C29 12.8 26.2 13.8 24 14.2 Z"
+        fill="url(#shivTrishulGold)"
+      />
+
+      {/* Center Trishul Collar / Arc */}
+      <path
+        d="M14.5 16.5 C18.5 18.8 24 19.8 24 19.8 C24 19.8 29.5 18.8 33.5 16.5 C34 17.5 32.5 19 24 21.5 C15.5 19 14 17.5 14.5 16.5 Z"
+        fill="url(#shivTrishulGold)"
+      />
+
+      {/* Sacred Tripundra Lines (3 holy lines) on center spear blade */}
+      <line x1="22.2" y1="12" x2="25.8" y2="12" stroke="#FFF7D6" strokeWidth="0.8" strokeLinecap="round" />
+      <line x1="22" y1="13.5" x2="26" y2="13.5" stroke="#FFF7D6" strokeWidth="0.8" strokeLinecap="round" />
+      <line x1="22.2" y1="15" x2="25.8" y2="15" stroke="#FFF7D6" strokeWidth="0.8" strokeLinecap="round" />
+      {/* Red Tilak Bindu */}
+      <circle cx="24" cy="13.5" r="0.6" fill="#DC2626" />
+
+      {/* Sacred Damru (Top cone) */}
+      <path
+        d="M18 22.5 H30 L24 26.5 Z"
+        fill="url(#shivTrishulGold)"
+      />
+      {/* Sacred Damru (Bottom cone) */}
+      <path
+        d="M18 30.5 H30 L24 26.5 Z"
+        fill="url(#shivTrishulGold)"
+      />
+      {/* Damru Center Waist Ring */}
+      <circle cx="24" cy="26.5" r="1.3" fill="#DC2626" />
+      <circle cx="24" cy="26.5" r="0.7" fill="#FFF7D6" />
+
+      {/* Shaft / Handle extending downwards */}
+      <path
+        d="M23 30.5 H25 V45 C25 45.6 24.5 46 24 46 C23.5 46 23 45.6 23 45 Z"
+        fill="url(#shivTrishulGold)"
+      />
+      {/* Shaft decorative rings */}
+      <rect x="22.5" y="34" width="3" height="1" rx="0.5" fill="#FFF7D6" />
+      <rect x="22.5" y="38" width="3" height="1" rx="0.5" fill="#FFF7D6" />
+      <circle cx="24" cy="45.5" r="1.2" fill="url(#shivTrishulGold)" />
+    </svg>
+  );
+}
 
 function InstagramIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
@@ -279,11 +361,11 @@ export function WelcomePageClient({
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#1b0206]/85 border-b border-amber-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            {/* Logo & Festival Branding */}
+            {/* Logo & Festival Branding with Sacred Shiv Trishul */}
             <Link href="/welcome" className="flex items-center gap-3 group">
-              <div className="relative w-12 h-12 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 via-rose-500 to-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center justify-center">
-                <div className="w-full h-full rounded-full bg-[#290308] flex items-center justify-center overflow-hidden">
-                  <Flame className="w-6 h-6 text-amber-400 animate-pulse" />
+              <div className="relative w-12 h-12 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.6)] flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                <div className="w-full h-full rounded-full bg-[#220206] flex items-center justify-center overflow-hidden p-1.5 border border-amber-400/40">
+                  <ShivTrishulLogo className="w-8 h-8 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
                 </div>
               </div>
               <div className="flex flex-col">
@@ -295,9 +377,6 @@ export function WelcomePageClient({
                     2026
                   </span>
                 </div>
-                <span className="text-[11px] text-amber-200/70 tracking-widest uppercase font-medium">
-                  Devbhumi Dwarka
-                </span>
               </div>
             </Link>
 
@@ -479,10 +558,8 @@ export function WelcomePageClient({
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center justify-center text-center mb-6"
           >
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 border border-amber-400/30 text-amber-300 text-[10px] min-[360px]:text-xs sm:text-sm font-semibold tracking-wide backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.2)] max-w-full text-center">
-              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0 animate-spin" />
-              <span>॥ શ્રી ગણેશાય નમઃ ॥ શ્રી દ્વારકાધીશાય નમઃ ॥ જય બહુચર માઁ ॥</span>
-              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0 animate-spin" />
+            <div className="inline-flex items-center gap-2 sm:gap-2.5 px-4 sm:px-5 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 via-amber-500/25 to-amber-500/10 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold tracking-widest backdrop-blur-md shadow-[0_0_20px_rgba(245,158,11,0.3)] max-w-full text-center">
+              <span>॥ શિવ ♆ શિવ ॥</span>
             </div>
           </motion.div>
 
@@ -499,7 +576,7 @@ export function WelcomePageClient({
                   માણેક નવરાત્રી
                 </span>
                 <span className="block text-2xl sm:text-4xl md:text-5xl font-bold text-amber-200/90 mt-1 sm:mt-2 tracking-wide">
-                  મહોત્સવ ૨૦૨૬
+                  ૨૦૨૬
                 </span>
               </h1>
             </motion.div>
@@ -716,8 +793,16 @@ export function WelcomePageClient({
                     <div className="text-lg font-bold text-amber-400">
                       {sponsor.gujaratiName}
                     </div>
-                    <div className="inline-block px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-200 text-sm font-semibold">
-                      {sponsor.role}
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <div className="inline-block px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-200 text-sm font-semibold">
+                        {sponsor.role}
+                      </div>
+                      {sponsor.id === "sponser-1" && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
+                          <ShivTrishulLogo className="w-3.5 h-3.5 text-amber-400" />
+                          <span>પરમ શિવભક્ત (Shiv Bhakt)</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -988,7 +1073,7 @@ export function WelcomePageClient({
                       Manek Navratri Ground
                     </h3>
                     <p className="text-xs text-amber-300 font-medium">
-                      માણેક નવરાત્રી મહોત્સવ ગ્રાઉન્ડ
+                      માણેક નવરાત્રી ગ્રાઉન્ડ
                     </p>
                   </div>
                 </div>
@@ -998,7 +1083,7 @@ export function WelcomePageClient({
                     Address / સરનામું
                   </div>
                   <p className="text-sm text-amber-100/90 leading-relaxed font-sans">
-                    Manek Navratri Mahotsav Ground, Near Dwarka Bypass Highway, Devbhumi Dwarka, Gujarat - 361335
+                    Manek Navratri Ground, Near Dwarka Bypass Highway, Devbhumi Dwarka, Gujarat - 361335
                   </p>
                   <p className="text-xs text-amber-200/60">
                     દ્વારકાધીશ મંદિરથી માત્ર 5 મિનિટના અંતરે, સુગમ વાહન પાર્કિંગ વ્યવસ્થા સાથે.
@@ -1148,18 +1233,20 @@ export function WelcomePageClient({
       <footer className="relative z-10 border-t-2 border-amber-500/30 bg-[#120103] pt-16 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Col 1: Branding */}
+            {/* Col 1: Branding with Sacred Shiv Trishul */}
             <div className="md:col-span-2 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full p-1 bg-gradient-to-tr from-amber-400 to-yellow-200 flex items-center justify-center">
-                  <Flame className="w-5 h-5 text-[#2a0408]" />
+                <div className="w-12 h-12 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-500 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                  <div className="w-full h-full rounded-full bg-[#220206] flex items-center justify-center p-1.5 border border-amber-400/40">
+                    <ShivTrishulLogo className="w-7 h-7 drop-shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
+                  </div>
                 </div>
                 <div>
                   <div className="text-2xl font-black text-amber-200 font-serif">
                     માણેક નવરાત્રી ૨૦૨૬
                   </div>
-                  <div className="text-xs text-amber-400 tracking-widest uppercase">
-                    Manek Navratri Mahotsav • Devbhumi Dwarka
+                  <div className="text-xs text-amber-400 tracking-wider font-semibold">
+                    Manek Navratri • <span className="text-amber-300 font-bold">ManekNavratri.com</span> • Devbhumi Dwarka
                   </div>
                 </div>
               </div>
@@ -1169,7 +1256,7 @@ export function WelcomePageClient({
               </p>
 
               <div className="text-xs text-amber-300 font-semibold pt-1">
-                ॥ જય શ્રી દ્વારકાધીશ • જય માઁ આશાપુરા • જય બહુચર માં ॥
+                ॥ જય શ્રી દ્વારકાધીશ • હર હર મહાદેવ • જય માઁ આશાપુરા ॥
               </div>
             </div>
 
@@ -1179,6 +1266,15 @@ export function WelcomePageClient({
                 ઝડપી લિંક્સ (Quick Links)
               </div>
               <ul className="space-y-2 text-xs sm:text-sm text-amber-200/75">
+                <li>
+                  <a
+                    href="https://maneknavratri.com"
+                    className="hover:text-amber-300 text-amber-400 font-semibold transition-colors flex items-center gap-1.5"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Portal: ManekNavratri.com</span>
+                  </a>
+                </li>
                 <li>
                   <Link href={registrationUrl as any} className="hover:text-amber-400 transition-colors flex items-center gap-1.5">
                     <Ticket className="w-3.5 h-3.5 text-amber-400" />
@@ -1272,7 +1368,7 @@ export function WelcomePageClient({
           {/* Bottom Copyright & Credits */}
           <div className="pt-8 border-t border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-amber-200/60">
             <div>
-              © 2026 Manek Navratri Mahotsav. Devbhumi Dwarka. All rights reserved.
+              © 2026 Manek Navratri. Devbhumi Dwarka. All rights reserved. • <span className="text-amber-300/80 font-semibold">ManekNavratri.com</span>
             </div>
             <div className="flex items-center gap-4">
               <Link href={registrationUrl as any} className="hover:text-amber-300 flex items-center gap-1.5">

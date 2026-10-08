@@ -5,13 +5,15 @@ import { WelcomePageClient } from "./components/welcome-page-client";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "માણેક નવરાત્રી ૨૦૨૬ • Manek Navratri Mahotsav | Devbhumi Dwarka",
+  title: "માણેક નવરાત્રી ૨૦૨૬ • Manek Navratri | ManekNavratri.com",
   description:
-    "Biggest Navratri Festival of Devbhumi Dwarka under the patronage of Hon. MLA Pabubha Manek and Sahadev Manek. 9 nights of grand traditional Raas Garba starting 11 October 2026.",
+    "Official website of Manek Navratri (ManekNavratri.com), Devbhumi Dwarka. Under the divine patronage of Hon. MLA Pabubha Manek and Sahadev Manek. 9 nights of grand traditional Raas Garba starting 11 October 2026.",
   openGraph: {
-    title: "માણેક નવરાત્રી ૨૦૨૬ • Manek Navratri Mahotsav",
+    title: "માણેક નવરાત્રી ૨૦૨૬ • Manek Navratri | ManekNavratri.com",
     description:
-      "Biggest Navratri Festival of Devbhumi Dwarka. Register your digital entry pass online.",
+      "Official website of Manek Navratri, Devbhumi Dwarka. Register your digital entry pass online at ManekNavratri.com.",
+    url: "https://maneknavratri.com",
+    siteName: "Manek Navratri",
     type: "website",
   },
 };
