@@ -1080,3 +1080,61 @@ export async function deleteEventRegistrationAction(eventId: string, registratio
     return { success: false, error: error?.message || "Failed to delete registration" };
   }
 }
+
+/**
+ * Public action: Get the active event registration URL dynamically.
+ * Prioritizes active event in DB with registrationEnabled = true,
+ * then environment variable REGISTRATION_URL,
+ * then any event in DB with registrationId,
+ */
+export async function getActiveRegistrationLinkAction(): Promise<string> {
+  try {
+    // 1. Try finding an active event in the database where registration is enabled
+    const activeEvent = await prisma.event.findFirst({
+      where: {
+        registrationEnabled: true,
+        registrationId: { not: null },
+        status: "ACTIVE",
+      },
+      orderBy: { createdAt: "desc" },
+      select: { registrationId: true },
+    });
+
+    if (activeEvent?.registrationId) {
+      return `/registration/${activeEvent.registrationId}`;
+    }
+
+    // 2. Check environment variable REGISTRATION_URL
+    const envRegUrl = process.env.REGISTRATION_URL;
+    if (envRegUrl && envRegUrl.trim()) {
+      const trimmed = envRegUrl.trim();
+      if (trimmed.startsWith("/") || trimmed.startsWith("http")) {
+        return trimmed;
+      }
+      return `/registration/${trimmed}`;
+    }
+
+    // 3. Fallback: Check any event with a registrationId in the database
+    const anyEventWithRegId = await prisma.event.findFirst({
+      where: {
+        registrationId: { not: null },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { registrationId: true },
+    });
+
+    if (anyEventWithRegId?.registrationId) {
+      return `/registration/${anyEventWithRegId.registrationId}`;
+    }
+
+    return "";
+  } catch (error) {
+    console.error("getActiveRegistrationLinkAction error:", error);
+    const envRegUrl = process.env.REGISTRATION_URL;
+    if (envRegUrl?.trim()) {
+      return envRegUrl.trim().startsWith("/") ? envRegUrl.trim() : `/registration/${envRegUrl.trim()}`;
+    }
+    return "";
+  }
+}
+
