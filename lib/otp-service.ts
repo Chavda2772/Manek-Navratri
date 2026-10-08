@@ -41,6 +41,14 @@ export const sendOtp = async (
 
   const chatId = formatWhatsAppChatId(number);
 
+  // Debug Mode Only
+  if (envServer.NODE_ENV != "production") {
+    return {
+      success: true,
+      message: "OTP sent to WhatsApp successfully.",
+    };
+  }
+
   const appName = envServer.NEXT_PUBLIC_APP_NAME;
   const messageText = `*${appName}* 🌸
 

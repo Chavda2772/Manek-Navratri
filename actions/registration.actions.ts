@@ -99,6 +99,7 @@ export async function regenerateRegistrationLinkAction(eventId: string) {
     try {
       revalidatePath("/events");
       revalidatePath(`/events/${eventId}`);
+      revalidatePath("/welcome");
     } catch {
       // Ignored outside Next.js request lifecycle
     }
@@ -143,6 +144,7 @@ export async function toggleRegistrationStatusAction(eventId: string, enabled: b
     try {
       revalidatePath("/events");
       revalidatePath(`/events/${eventId}`);
+      revalidatePath("/welcome");
     } catch {
       // Ignored outside Next.js request lifecycle
     }

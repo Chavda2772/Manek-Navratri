@@ -71,9 +71,9 @@ export function RegistrationFormClient({
   }>({});
 
   useEffect(() => {
+    // If not verified with phone, redirect to Step 1
     if (!phone) {
-      toast.error("Please verify your phone number first");
-      router.replace(`/registration/${registrationId}`);
+      router.push(`/registration/${registrationId}`);
     }
   }, [phone, registrationId, router]);
 
@@ -91,51 +91,66 @@ export function RegistrationFormClient({
 
   const addFamilyMember = () => {
     if (familyMembers.length >= MAX_FAMILY_MEMBERS) {
-      toast.error(`You can add up to ${MAX_FAMILY_MEMBERS} family members.`);
+      toast.error(`Maximum ${MAX_FAMILY_MEMBERS} family members allowed.`);
       return;
     }
     const newMember: FamilyMemberItem = {
-      id: Math.random().toString(36).substring(2, 9),
+      id: `fam_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       name: "",
-      relation: "Wife",
+      relation: "Other",
     };
     setFamilyMembers([...familyMembers, newMember]);
   };
 
   const removeFamilyMember = (id: string) => {
     setFamilyMembers(familyMembers.filter((m) => m.id !== id));
+    if (errors.family?.[id]) {
+      const updatedFamilyErrors = { ...errors.family };
+      delete updatedFamilyErrors[id];
+      setErrors({ ...errors, family: updatedFamilyErrors });
+    }
   };
 
-  const updateFamilyMember = (id: string, field: "name" | "relation", value: string) => {
+  const updateFamilyMember = (
+    id: string,
+    field: "name" | "relation",
+    value: string
+  ) => {
     setFamilyMembers(
-      familyMembers.map((m) => {
-        if (m.id === id) {
-          return { ...m, [field]: value };
-        }
-        return m;
-      })
+      familyMembers.map((m) => (m.id === id ? { ...m, [field]: value } : m))
     );
+    if (field === "name" && errors.family?.[id]) {
+      const updatedFamilyErrors = { ...errors.family };
+      delete updatedFamilyErrors[id];
+      setErrors({ ...errors, family: updatedFamilyErrors });
+    }
   };
 
-  const validateForm = () => {
+  const validate = () => {
     const newErrors: {
       primaryName?: string;
       place?: string;
       family?: Record<string, string>;
     } = {};
 
-    if (!primaryName.trim() || primaryName.trim().length < 2) {
-      newErrors.primaryName = "Please enter primary attendee name.";
+    if (!primaryName.trim()) {
+      newErrors.primaryName = "Please enter your full name.";
+    } else if (primaryName.trim().length < 2) {
+      newErrors.primaryName = "Name must be at least 2 characters.";
     }
 
     if (!place.trim()) {
-      newErrors.place = "Please enter your place / city.";
+      newErrors.place = "Please enter your place/city.";
+    } else if (place.trim().length < 2) {
+      newErrors.place = "Place must be at least 2 characters.";
     }
 
     const familyErrors: Record<string, string> = {};
-    familyMembers.forEach((m) => {
-      if (!m.name.trim()) {
-        familyErrors[m.id] = "Name is required";
+    familyMembers.forEach((member) => {
+      if (!member.name.trim()) {
+        familyErrors[member.id] = "Member name is required.";
+      } else if (member.name.trim().length < 2) {
+        familyErrors[member.id] = "Name must be at least 2 characters.";
       }
     });
 
@@ -150,7 +165,7 @@ export function RegistrationFormClient({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (!validate()) {
       toast.error("Please fill in all required fields.");
       return;
     }
@@ -162,10 +177,10 @@ export function RegistrationFormClient({
         registrationId,
         mobileNumber: phone,
         sessionToken: token,
-        primaryName,
-        place,
+        primaryName: primaryName.trim(),
+        place: place.trim(),
         familyMembers: familyMembers.map((m) => ({
-          name: m.name,
+          name: m.name.trim(),
           relation: m.relation,
         })),
       });
@@ -199,36 +214,36 @@ export function RegistrationFormClient({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="space-y-6"
+      className="space-y-6 text-amber-50"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* PRIMARY ATTENDEE CARD */}
-        <div className="rounded-3xl bg-card border border-border/80 p-5 sm:p-7 shadow-xl backdrop-blur-md space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+        <div className="rounded-3xl bg-gradient-to-b from-[#2e040b]/95 via-[#210308]/95 to-[#160205]/98 border-2 border-amber-500/40 p-5 sm:p-7 shadow-xl backdrop-blur-xl space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-amber-500/20">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center font-bold">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center justify-center font-bold">
                 <User className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-foreground">
+                <h2 className="text-lg font-black text-amber-100 font-serif">
                   Primary Attendee Details
                 </h2>
-                <p className="text-xs text-muted-foreground">
-                  Pass will be registered in this person's name
+                <p className="text-xs text-amber-200/70">
+                  મુખ્ય ખેલૈયા / દર્શકની માહિતી (Pass will be issued under this name)
                 </p>
               </div>
             </div>
 
             {/* Verified badge with Change Number action */}
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold font-mono">
-                <ShieldCheck className="w-3.5 h-3.5" /> +91 {phone} Verified
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold font-mono">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> +91 {phone} Verified
               </span>
               <button
                 type="button"
                 onClick={handleChangePhoneNumber}
                 disabled={changingNumber || loading}
-                className="text-[11px] text-muted-foreground hover:text-pink-600 dark:hover:text-pink-400 font-bold underline cursor-pointer"
+                className="text-[11px] text-amber-300 hover:text-amber-100 font-bold underline cursor-pointer"
                 title="Change phone number"
               >
                 {changingNumber ? (
@@ -243,8 +258,8 @@ export function RegistrationFormClient({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Primary Name */}
             <div className="space-y-1.5 sm:col-span-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                Full Name <span className="text-rose-500">*</span>
+              <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                Full Name <span className="text-amber-400">*</span>
               </label>
               <div className="relative">
                 <Input
@@ -255,12 +270,12 @@ export function RegistrationFormClient({
                     setPrimaryName(e.target.value);
                     if (errors.primaryName) setErrors({ ...errors, primaryName: undefined });
                   }}
-                  className="h-12 text-sm font-semibold rounded-2xl border-2 focus-visible:ring-pink-500/20 focus-visible:border-pink-500"
+                  className="h-12 text-sm font-semibold rounded-2xl border-2 bg-black/40 border-amber-500/30 text-amber-100 placeholder:text-amber-300/30 focus-visible:ring-4 focus-visible:ring-amber-500/20 focus-visible:border-amber-400"
                   autoFocus
                 />
               </div>
               {errors.primaryName && (
-                <p className="text-xs font-semibold text-rose-500 flex items-center gap-1 mt-1">
+                <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1">
                   <AlertCircle className="w-3.5 h-3.5" /> {errors.primaryName}
                 </p>
               )}
@@ -268,26 +283,26 @@ export function RegistrationFormClient({
 
             {/* Place / City */}
             <div className="space-y-1.5 sm:col-span-1">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                Place / City <span className="text-rose-500">*</span>
+              <label className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                Place / City <span className="text-amber-400">*</span>
               </label>
               <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                  <MapPin className="w-4 h-4 text-purple-500" />
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-amber-400">
+                  <MapPin className="w-4 h-4 text-amber-400" />
                 </div>
                 <Input
                   type="text"
-                  placeholder="e.g. Ahmedabad"
+                  placeholder="e.g. Dwarka / Jamnagar"
                   value={place}
                   onChange={(e) => {
                     setPlace(e.target.value);
                     if (errors.place) setErrors({ ...errors, place: undefined });
                   }}
-                  className="pl-10 h-12 text-sm font-semibold rounded-2xl border-2 focus-visible:ring-pink-500/20 focus-visible:border-pink-500"
+                  className="pl-10 h-12 text-sm font-semibold rounded-2xl border-2 bg-black/40 border-amber-500/30 text-amber-100 placeholder:text-amber-300/30 focus-visible:ring-4 focus-visible:ring-amber-500/20 focus-visible:border-amber-400"
                 />
               </div>
               {errors.place && (
-                <p className="text-xs font-semibold text-rose-500 flex items-center gap-1 mt-1">
+                <p className="text-xs font-semibold text-rose-400 flex items-center gap-1 mt-1">
                   <AlertCircle className="w-3.5 h-3.5" /> {errors.place}
                 </p>
               )}
@@ -296,18 +311,18 @@ export function RegistrationFormClient({
         </div>
 
         {/* FAMILY MEMBERS CARD */}
-        <div className="rounded-3xl bg-card border border-border/80 p-5 sm:p-7 shadow-xl backdrop-blur-md space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+        <div className="rounded-3xl bg-gradient-to-b from-[#2e040b]/95 via-[#210308]/95 to-[#160205]/98 border-2 border-amber-500/40 p-5 sm:p-7 shadow-xl backdrop-blur-xl space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-amber-500/20">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center justify-center font-bold">
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-foreground">
+                <h2 className="text-lg font-black text-amber-100 font-serif">
                   Family Members
                 </h2>
-                <p className="text-xs text-muted-foreground">
-                  Add up to {MAX_FAMILY_MEMBERS} additional family members
+                <p className="text-xs text-amber-200/70">
+                  પરિવારના સભ્યો ઉમેરો (Add up to {MAX_FAMILY_MEMBERS} members)
                 </p>
               </div>
             </div>
@@ -318,9 +333,9 @@ export function RegistrationFormClient({
               disabled={familyMembers.length >= MAX_FAMILY_MEMBERS}
               variant="outline"
               size="sm"
-              className="rounded-xl font-bold text-xs bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 dark:text-pink-400 border border-pink-500/30 cursor-pointer disabled:opacity-50"
+              className="rounded-xl font-bold text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 cursor-pointer disabled:opacity-50"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" />
+              <Plus className="w-3.5 h-3.5 mr-1 text-amber-400" />
               Add Member ({familyMembers.length}/{MAX_FAMILY_MEMBERS})
             </Button>
           </div>
@@ -331,13 +346,13 @@ export function RegistrationFormClient({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="p-6 rounded-2xl bg-muted/40 border border-dashed border-border text-center space-y-2"
+                className="p-6 rounded-2xl bg-black/30 border border-dashed border-amber-500/30 text-center space-y-2"
               >
-                <p className="text-sm font-semibold text-muted-foreground">
+                <p className="text-sm font-semibold text-amber-200/80">
                   No family members added yet.
                 </p>
-                <p className="text-xs text-muted-foreground/80">
-                  Click "+ Add Member" above if you'd like to issue family passes.
+                <p className="text-xs text-amber-200/60">
+                  જો આપ પરિવાર સાથે આવતા હોવ તો ઉપર &ldquo;+ Add Member&rdquo; બટન પર ક્લિક કરીને સભ્યો ઉમેરી શકો છો.
                 </p>
               </motion.div>
             ) : (
@@ -349,16 +364,16 @@ export function RegistrationFormClient({
                     animate={{ opacity: 1, height: "auto", scale: 1 }}
                     exit={{ opacity: 0, height: 0, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="p-4 rounded-2xl bg-background/80 border border-border/80 space-y-3 shadow-xs hover:border-pink-500/30 transition-all"
+                    className="p-4 rounded-2xl bg-black/30 border border-amber-500/25 space-y-3 shadow-xs hover:border-amber-400/50 transition-all"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase text-pink-600 dark:text-pink-400 tracking-wider">
+                      <span className="text-xs font-black uppercase text-amber-400 tracking-wider">
                         Family Member #{idx + 1}
                       </span>
                       <button
                         type="button"
                         onClick={() => removeFamilyMember(member.id)}
-                        className="text-xs text-muted-foreground hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="text-xs text-amber-300 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
                         title="Remove member"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -372,10 +387,10 @@ export function RegistrationFormClient({
                           placeholder="Member Full Name"
                           value={member.name}
                           onChange={(e) => updateFamilyMember(member.id, "name", e.target.value)}
-                          className="h-12 text-sm font-semibold rounded-xl"
+                          className="h-12 text-sm font-semibold rounded-xl bg-black/40 border-amber-500/30 text-amber-100 placeholder:text-amber-300/30 focus-visible:ring-amber-500/20 focus-visible:border-amber-400"
                         />
                         {errors.family?.[member.id] && (
-                          <p className="text-[11px] font-semibold text-rose-500">
+                          <p className="text-[11px] font-semibold text-rose-400">
                             {errors.family[member.id]}
                           </p>
                         )}
@@ -386,12 +401,12 @@ export function RegistrationFormClient({
                           value={member.relation}
                           onValueChange={(val) => updateFamilyMember(member.id, "relation", val as FamilyRelation)}
                         >
-                          <SelectTrigger className="h-12 rounded-xl text-sm font-semibold border bg-card">
+                          <SelectTrigger className="h-12 rounded-xl text-sm font-semibold border-amber-500/30 bg-black/40 text-amber-100">
                             <SelectValue placeholder="Relation" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-xl shadow-xl max-h-56">
+                          <SelectContent className="rounded-xl shadow-xl max-h-56 bg-[#200308] border-amber-500/30 text-amber-100">
                             {FAMILY_RELATIONS.map((rel) => (
-                              <SelectItem key={rel} value={rel} className="text-xs font-semibold rounded-lg">
+                              <SelectItem key={rel} value={rel} className="text-xs font-semibold rounded-lg focus:bg-amber-500/20 focus:text-amber-200">
                                 {rel}
                               </SelectItem>
                             ))}
@@ -411,17 +426,17 @@ export function RegistrationFormClient({
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-14 rounded-2xl text-base font-black bg-gradient-to-r from-pink-600 via-pink-500 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-xl shadow-pink-600/30 cursor-pointer disabled:opacity-50 transition-all"
+            className="w-full h-14 rounded-2xl text-base font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-500 text-[#2a0408] shadow-[0_0_25px_rgba(245,158,11,0.4)] hover:shadow-[0_0_35px_rgba(245,158,11,0.7)] border border-amber-200 cursor-pointer disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                Generating Event Passes...
+                <Loader2 className="w-5 h-5 animate-spin mr-2 text-[#2a0408]" />
+                <span>Generating Event Passes...</span>
               </>
             ) : (
               <>
-                Confirm Registration • {totalPeople} {totalPeople === 1 ? "Pass" : "Passes"}
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <span>Confirm Registration • {totalPeople} {totalPeople === 1 ? "Pass" : "Passes"}</span>
+                <ArrowRight className="w-5 h-5 ml-1 text-[#2a0408]" />
               </>
             )}
           </Button>
